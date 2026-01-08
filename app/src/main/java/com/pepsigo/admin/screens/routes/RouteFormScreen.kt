@@ -21,9 +21,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.pepsigo.admin.model.LocationUiModel
 import com.pepsigo.admin.model.RouteFormState
+import com.pepsigo.admin.ui.theme.inversePrimaryLight
 
 
 @Composable
@@ -51,9 +53,9 @@ fun RouteFormScreen(
                     Text("Save")
                 }
             }
-        }
+        },
+//        containerColor = inversePrimaryLight.copy(alpha = 0.35f),
     ) { innerPadding ->
-
         Column(
             modifier
                 .fillMaxSize()

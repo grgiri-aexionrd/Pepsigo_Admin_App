@@ -1,6 +1,8 @@
 package com.pepsigo.admin.screens.inventory
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,12 +29,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.pepsigo.admin.R
 import com.pepsigo.admin.screens.commonComponents.ReportTopAppBar
 import com.pepsigo.admin.ui.theme.inversePrimaryLight
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InventoryScreen(
@@ -83,16 +87,14 @@ fun InventoryScreen(
                         .padding(horizontal = 16.dp)
                 )
             }
-        }
-
+        },
+        containerColor = inversePrimaryLight.copy(alpha = 0.35f),
     ) { innerPadding ->
         Surface(
             modifier = Modifier
-                .background(
-                    color = inversePrimaryLight.copy(alpha = 0.35f)
-                )
                 .padding(innerPadding)
-                .fillMaxSize()
+                .fillMaxSize(),
+            color = Color.Transparent
         ) {
             when (val state = inventoryState) {
                 is InventoryUiState.Loading -> {

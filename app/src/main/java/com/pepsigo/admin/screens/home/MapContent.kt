@@ -23,6 +23,7 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberMarkerState
+import com.google.maps.android.compose.rememberUpdatedMarkerState
 import com.pepsigo.admin.R
 import com.pepsigo.admin.utils.bitmapDescriptorFromVector
 
@@ -103,7 +104,7 @@ fun MapContent(
 
         // test marker
         Marker(
-            state = rememberMarkerState(position = testMarkerLocation),
+            state = rememberUpdatedMarkerState( testMarkerLocation),
             title = "Test Marker",
             snippet = "Near default location",
             icon = deliveryIcon

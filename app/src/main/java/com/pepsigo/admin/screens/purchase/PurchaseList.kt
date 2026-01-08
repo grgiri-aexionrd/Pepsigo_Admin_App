@@ -38,13 +38,10 @@ fun PurchaseList(
     modifier: Modifier = Modifier,
     onItemClick: (PurchaseUiModel) -> Unit
 ) {
-
-
     LazyColumn(
         modifier = modifier.fillMaxSize(),
 //        contentPadding = PaddingValues(vertical = 8.dp)
     ){
-
         stickyHeader {
             Row (modifier = Modifier.fillMaxWidth()
                 .padding(8.dp),
@@ -57,7 +54,6 @@ fun PurchaseList(
                 )
             }
         }
-
         items(count = purchases.itemCount) { purchase ->
             val item = purchases[purchase]
             if (item != null) {

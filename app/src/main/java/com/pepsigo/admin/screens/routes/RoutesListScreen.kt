@@ -35,6 +35,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -60,9 +61,7 @@ fun RoutesListScreen(
     }
 
         LazyColumn(modifier = modifier
-            .background(
-                color = inversePrimaryLight.copy(alpha = 0.35f)
-            )
+            .background(color = Color.Transparent )
             .fillMaxSize()
             .padding(16.dp)) {
 

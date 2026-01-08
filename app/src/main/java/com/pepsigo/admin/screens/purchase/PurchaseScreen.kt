@@ -100,15 +100,14 @@ fun PurchaseScreen(
                         .padding(horizontal = 16.dp)
                 )
             }
-        }
+        },
+        containerColor = inversePrimaryLight.copy(alpha = 0.35f)
     ){innerPadding ->
         Surface(
             modifier = Modifier
-                .background(
-                    color = inversePrimaryLight.copy(alpha = 0.35f)
-                )
                 .padding(innerPadding)
-                .fillMaxSize()
+                .fillMaxSize(),
+            color = Color.Transparent
         ){
             when (val state = purchaseState) {
                 is PurchaseUiState.Loading -> {

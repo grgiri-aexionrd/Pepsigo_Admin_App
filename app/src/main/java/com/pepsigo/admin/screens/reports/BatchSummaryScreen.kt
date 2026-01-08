@@ -103,8 +103,8 @@ fun BatchSummaryScreen(
                         .padding(horizontal = 16.dp)
                 )
             }
-        }
-
+        },
+        containerColor = MaterialTheme.colorScheme.inverseOnSurface
     ) {innerPadding ->
         PullToRefreshBox(
             isRefreshing = batchSummary.isRefreshing,

@@ -1,5 +1,7 @@
 package com.pepsigo.admin.screens.reports
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -40,6 +42,7 @@ class PaymentSummaryViewModel(private val repo: DailyCollectionRepo): ViewModel(
         _uiState.value = _uiState.value.copy(toDate = date)
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun fetch(from: String, to: String) {
         val current = _uiState.value
         if (from.isBlank() || to.isBlank() ) {

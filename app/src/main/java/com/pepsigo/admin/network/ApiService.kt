@@ -47,6 +47,7 @@ import com.pepsigo.admin.model.UserDto
 import com.pepsigo.admin.model.UserResponse
 import com.pepsigo.admin.model.VendorLedgerResponse
 import com.pepsigo.admin.model.DailyCollectionResponse
+import com.pepsigo.admin.model.DeliveryPerformanceResponse
 import com.pepsigo.admin.model.PaymentSummaryResponse
 import retrofit2.http.POST
 import retrofit2.http.Body
@@ -261,6 +262,13 @@ interface ApiService {
     // daily collection endpoint
     @GET("daily-collection")
     suspend fun dailyCollection(@Query("date") date: String): DailyCollectionResponse
+
+    // delivery performance endpoint
+    @GET("delivery-performance")
+    suspend fun deliveryPerformance(
+        @Query("from") from: String,
+        @Query("to") to: String
+    ): DeliveryPerformanceResponse
 
     // Payment Summary
     @GET("payment-summary")

@@ -1,5 +1,7 @@
 package com.pepsigo.admin.mapper
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import com.pepsigo.admin.model.AmountSummaryUi
 import com.pepsigo.admin.model.InventoryUi
 import com.pepsigo.admin.model.ItemsDetailUi
@@ -12,6 +14,7 @@ import com.pepsigo.admin.utils.safeInt
 import com.pepsigo.admin.utils.safePercent
 import com.pepsigo.admin.utils.safeText
 
+@RequiresApi(Build.VERSION_CODES.O)
 fun PurchaseDetailDto.toUi(hasSales: Boolean): PurchaseDetailUi {
     return PurchaseDetailUi(
         purchase = PurchaseUi(

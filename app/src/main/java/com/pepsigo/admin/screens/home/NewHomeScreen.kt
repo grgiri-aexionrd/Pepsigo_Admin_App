@@ -212,7 +212,8 @@ fun NewHomeScreen(
                     }
 
                 )
-            }
+            },
+            containerColor = inversePrimaryLight.copy(alpha = 0.35f),
         ){ innerPadding ->
             // 🔥 Pull to Refresh MUST wrap ONLY the content, not the drawer or scaffold
             PullToRefreshBox(
@@ -221,10 +222,10 @@ fun NewHomeScreen(
                 state = refreshState,
                 modifier = Modifier.padding(innerPadding)
             ){
-
-                Box(Modifier.background(
-                        color = inversePrimaryLight.copy(alpha = 0.35f)
-                        )
+                Box(Modifier
+//                    .background(
+//                        color = inversePrimaryLight.copy(alpha = 0.35f)
+//                        )
                     .fillMaxSize()) {
 
                     if (isVisible) {

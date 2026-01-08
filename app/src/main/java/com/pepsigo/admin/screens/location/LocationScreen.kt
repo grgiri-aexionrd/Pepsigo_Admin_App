@@ -48,6 +48,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -92,7 +93,8 @@ fun LocationScreen(
                 Icon(Icons.Default.Add, contentDescription = "Add Location")
             }
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = inversePrimaryLight.copy(alpha = 0.35f)
     ) { innerPadding ->
         PullToRefreshBox(
             isRefreshing = state.isRefreshing,
@@ -100,13 +102,10 @@ fun LocationScreen(
             state = refreshState,
             modifier = Modifier.padding(innerPadding)
         ) {
-            Box(
+            Surface(
                 modifier = Modifier
-                    .background(
-                        color = inversePrimaryLight.copy(alpha = 0.35f)
-                    )
-                    .padding(8.dp),
-                contentAlignment = Alignment.Center
+                    .fillMaxSize(),
+                color = Color.Transparent
             ) {
                 when {
                     state.isLoading -> {
@@ -137,7 +136,6 @@ fun LocationScreen(
 
                         LazyColumn(
                             modifier = Modifier.fillMaxSize()
-//                            .padding(innerPadding)
                                 .padding(16.dp)
                         ) {
                             val filtered = state.locations.filter {

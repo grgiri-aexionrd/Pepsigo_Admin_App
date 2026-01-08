@@ -1,7 +1,9 @@
 package com.pepsigo.admin.repository
 
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
@@ -46,6 +48,7 @@ class PurchaseRepoImpl(private val apiService: ApiService): PurchaseRepo {
             }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun getPurchaseById(id: Int): Result<PurchaseDetailUi> {
         return wrapError {
             Log.d("PurchaseRepoImpl", "getPurchaseById: $id")

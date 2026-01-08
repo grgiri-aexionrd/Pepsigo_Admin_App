@@ -59,7 +59,7 @@ fun ReportButton(
 
         Text(
             text = label,
-            fontSize = 12.sp, // slightly smaller for 5 cols
+            fontSize = 11.sp, // slightly smaller for 5 cols
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
             maxLines = 2,

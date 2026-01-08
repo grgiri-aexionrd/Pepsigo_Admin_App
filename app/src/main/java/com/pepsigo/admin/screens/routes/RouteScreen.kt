@@ -92,7 +92,8 @@ fun RouteScreen(
                         .padding(horizontal = 16.dp)
                 )
             }
-        }
+        },
+        containerColor = inversePrimaryLight.copy(alpha = 0.35f),
     ){innerPadding ->
         PullToRefreshBox(
             isRefreshing = refreshing,
@@ -102,11 +103,9 @@ fun RouteScreen(
         ) {
             Surface(
                 modifier = Modifier
-                    .background(
-                        color = inversePrimaryLight.copy(alpha = 0.35f)
-                    )
                     .padding(innerPadding)
-                    .fillMaxSize()
+                    .fillMaxSize(),
+                color = Color.Transparent
             ) {
                 when (val state = routeUiState) {
                     is RouteUiState.RoutesList -> {

@@ -54,9 +54,10 @@ import com.google.android.libraries.places.api.Places
 import com.pepsigo.admin.screens.home.NewHomeScreen
 import com.pepsigo.admin.screens.reports.BatchSummaryScreen
 import com.pepsigo.admin.screens.reports.BatchSummaryViewModel
-import com.pepsigo.admin.screens.reports.ItemWiseDeliveryScreen
 import com.pepsigo.admin.screens.reports.ItemWiseSalesScreen
 import com.pepsigo.admin.screens.reports.DailyCollectionViewModel
+import com.pepsigo.admin.screens.reports.DeliveryPerformanceScreen
+import com.pepsigo.admin.screens.reports.DeliveryPerformanceViewModel
 import com.pepsigo.admin.screens.reports.LedgerScreen
 import com.pepsigo.admin.screens.reports.LedgerViewModel
 import com.pepsigo.admin.screens.reports.PaymentSummaryScreen
@@ -379,7 +380,10 @@ fun StartApp(userPreferenceRepository: UserPreferenceRepository) {
 
         // New report routes
         composable(Routes.ItemWiseDelivery) {
-            ItemWiseDeliveryScreen(onNavigateBack = { navController.popBackStack() })
+            val deliveryPerformanceViewModel: DeliveryPerformanceViewModel = viewModel(factory = DeliveryPerformanceViewModel.Factory)
+            DeliveryPerformanceScreen(onNavigateBack = { navController.popBackStack() },
+                viewModel = deliveryPerformanceViewModel
+            )
         }
 
         composable(Routes.ItemWiseSales) {

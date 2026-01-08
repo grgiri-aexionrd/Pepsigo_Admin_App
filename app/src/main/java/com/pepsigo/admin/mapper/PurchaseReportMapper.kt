@@ -1,9 +1,12 @@
 package com.pepsigo.admin.mapper
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import com.pepsigo.admin.model.SalesPurchaseReportUi
 import com.pepsigo.admin.model.SalesReportItem
 import com.pepsigo.admin.utils.safeDate
 
+@RequiresApi(Build.VERSION_CODES.O)
 fun SalesReportItem .toDomain(): SalesPurchaseReportUi {
     return SalesPurchaseReportUi(
         id = id,

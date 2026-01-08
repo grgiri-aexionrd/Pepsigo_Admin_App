@@ -71,7 +71,8 @@ fun LedgerScreen(
                 desc = stringResource(R.string.cust_vendor_ledger),
                 onBackClick = { onNavigateBack() }
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.inverseOnSurface
 
     ) { innerPadding ->
         PullToRefreshBox(
@@ -88,7 +89,8 @@ fun LedgerScreen(
                 item {
                     PrimaryTabRow(
                         selectedTabIndex = selectedTab,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        containerColor = Color.Transparent
                     ) {
                         tabs.forEachIndexed { index, tabTitle ->
                             Tab(

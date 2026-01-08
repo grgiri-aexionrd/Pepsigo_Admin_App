@@ -28,35 +28,10 @@ fun DeliveryExecutiveAddScreen(
     onSave: (NewDelForm) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Animation trigger
-//    var animate by remember { mutableStateOf(false) }
-
-    // Animated scale value — from 0.8f → 1.0f
-//    val scale by animateFloatAsState(
-//        targetValue = if (animate) 1f else 0.8f,
-//        animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing),
-//        label = "iconScale"
-//    )
-
-    // Trigger the animation once when the screen appears
-//    LaunchedEffect(Unit) {
-//        animate = true
-//    }
-
     Column(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-
-//        Icon(
-//            imageVector = Icons.Default.DeliveryDining, // 🚚 delivery-themed
-//            contentDescription = "Delivery Executive",
-//            tint = MaterialTheme.colorScheme.primary,
-//            modifier = Modifier
-//                .size(100.dp)
-//                .graphicsLayer(scaleX = scale, scaleY = scale)
-//        )
-
         Text(text = "Add Delivery Executive",
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier

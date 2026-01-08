@@ -68,6 +68,7 @@
     <string name="item_wise_delivery">Delivery</string>
     <string name="item_wise_sales">Item Sales</string>
     <string name="payment_summary">Payment Summary</string>
+    <string name="delivery_performance">Delivery Performance</string>
 
 
 </resources>

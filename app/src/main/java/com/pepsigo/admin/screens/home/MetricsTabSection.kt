@@ -28,6 +28,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pepsigo.admin.model.MetricCardState
@@ -49,7 +50,7 @@ fun MetricsTabsSection(
         PrimaryTabRow (
             selectedTabIndex = selectedTab,
             modifier = Modifier.fillMaxWidth(),
-            containerColor = inversePrimaryLight.copy(alpha = 0.35f),
+            containerColor = Color.Transparent,
             contentColor = MaterialTheme.colorScheme.onSurface,
         ) {
             tabs.forEachIndexed { index, tabTitle ->

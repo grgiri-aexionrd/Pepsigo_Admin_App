@@ -24,6 +24,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -53,15 +54,14 @@ fun CustomerScreen(
                      Icon(Icons.Default.Add, contentDescription = "Add Customer")
                  }
             }
-        }
+        },
+        containerColor = inversePrimaryLight.copy(alpha = 0.35f)
     ){ innerPadding ->
         Surface(
             modifier = Modifier
-                .background(
-                    color = inversePrimaryLight.copy(alpha = 0.35f)
-                )
                 .padding(innerPadding)
-                .fillMaxSize()
+                .fillMaxSize(),
+            color = Color.Transparent
         ) {
             when (val state = customerState) {
                 is CustomerUiState.CustomerList -> {

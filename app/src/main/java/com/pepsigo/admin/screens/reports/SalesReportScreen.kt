@@ -51,7 +51,8 @@ fun SalesReportScreen(
                 desc = stringResource(R.string.sales_register),
                 onBackClick = { onNavigateBack() }
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.inverseOnSurface
     ) { innerPadding ->
         Column(
             modifier = Modifier

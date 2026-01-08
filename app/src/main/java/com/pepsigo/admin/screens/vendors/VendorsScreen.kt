@@ -31,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.pepsigo.admin.ui.theme.inversePrimaryLight
@@ -71,16 +72,15 @@ fun VendorsScreen(
                         .padding(horizontal = 16.dp)
                 )
             }
-        }
-
+        },
+        containerColor = inversePrimaryLight.copy(alpha = 0.35f)
+//        containerColor = MaterialTheme.colorScheme.inverseOnSurface
     ){ innerPadding ->
         Surface(
             modifier = Modifier
-                .background(
-                    color = inversePrimaryLight.copy(alpha = 0.35f)
-                )
                 .padding(innerPadding)
-                .fillMaxSize()
+                .fillMaxSize(),
+            color = Color.Transparent
         ){
             when (val state = vendorState) {
                 is VendorUiState.Loading -> {

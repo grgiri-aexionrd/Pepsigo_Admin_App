@@ -76,22 +76,22 @@ import com.pepsigo.admin.ui.theme.inversePrimaryLight
 import kotlin.text.ifEmpty
 
 // Preview helpers (create outside composable to avoid constructing a ViewModel inside a composable)
-private val previewFakeRepo = object : com.pepsigo.admin.repository.DailyCollectionRepo {
-    override suspend fun getDailyCollection(date: String): Result<DailyCollectionResponse> {
-        val sample = DailyCollectionResponse(
-            date = "2026-01-06",
-            data = listOf(ExecutiveCollection(executiveId = 13, executiveName = "lufy3", totalCollected = "1590.00"))
-        )
-        return Result.success(sample)
-    }
+//private val previewFakeRepo = object : com.pepsigo.admin.repository.DailyCollectionRepo {
+//    override suspend fun getDailyCollection(date: String): Result<DailyCollectionResponse> {
+//        val sample = DailyCollectionResponse(
+//            date = "2026-01-06",
+//            data = listOf(ExecutiveCollection(executiveId = 13, executiveName = "lufy3", totalCollected = "1590.00"))
+//        )
+//        return Result.success(sample)
+//    }
+//
+//    // Implement the other abstract method from the repository interface so the anonymous object compiles.
+//    override suspend fun getPaymentSummary(from: String, to: String): Result<PaymentSummaryResponse> {
+//        return Result.failure(Exception("Not implemented in preview"))
+//    }
+//}
 
-    // Implement the other abstract method from the repository interface so the anonymous object compiles.
-    override suspend fun getPaymentSummary(from: String, to: String): Result<PaymentSummaryResponse> {
-        return Result.failure(Exception("Not implemented in preview"))
-    }
-}
-
-private val previewVm = DailyCollectionViewModel(previewFakeRepo)
+//private val previewVm = DailyCollectionViewModel(previewFakeRepo)
 
 @RequiresApi(Build.VERSION_CODES.Q)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -389,13 +389,13 @@ fun DailyCollectionRow(exec: ExecutiveCollection) {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.Q)
-@Preview(showBackground = true)
-@Composable
-fun ReportsScreenPreview() {
-    ReportsScreen(
-        onNavigateBack = {},
-        onNavigate = {},
-        viewModel = previewVm
-    )
-}
+//@RequiresApi(Build.VERSION_CODES.Q)
+//@Preview(showBackground = true)
+//@Composable
+//fun ReportsScreenPreview() {
+//    ReportsScreen(
+//        onNavigateBack = {},
+//        onNavigate = {},
+//        viewModel = previewVm
+//    )
+//}

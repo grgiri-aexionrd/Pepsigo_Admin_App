@@ -38,6 +38,7 @@ import com.pepsigo.admin.R
 import com.pepsigo.admin.domainLayer.OfferUi
 import com.pepsigo.admin.screens.commonComponents.DropDown
 import com.pepsigo.admin.screens.commonComponents.ReportTopAppBar
+import com.pepsigo.admin.ui.theme.inversePrimaryLight
 
 @Composable
 fun PromotionsScreen(
@@ -57,6 +58,7 @@ fun PromotionsScreen(
             )
         },
         snackbarHost = { },
+        containerColor = inversePrimaryLight.copy(alpha = 0.35f)
     ) {innerPadding ->
         LazyColumn(
             modifier = Modifier

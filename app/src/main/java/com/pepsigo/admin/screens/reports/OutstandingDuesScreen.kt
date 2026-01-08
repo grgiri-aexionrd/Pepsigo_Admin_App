@@ -42,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.pepsigo.admin.R
@@ -71,7 +72,8 @@ fun OutstandingDuesScreen(
                 onBackClick = { onNavigateBack() }
 
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.inverseOnSurface
 
     ) { innerPadding ->
         PullToRefreshBox(
@@ -89,7 +91,8 @@ fun OutstandingDuesScreen(
                 item {
                     PrimaryTabRow(
                         selectedTabIndex = selectedTab,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        containerColor = Color.Transparent
                     ) {
                         tabs.forEachIndexed { index, tabTitle ->
                             Tab(

@@ -35,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.pepsigo.admin.ui.theme.inversePrimaryLight
 import kotlinx.coroutines.delay
@@ -79,12 +80,14 @@ fun DeliveryExecutiveScreen(
                         .padding(horizontal = 16.dp)
                 )
             }
-        }
+        },
+        containerColor = inversePrimaryLight.copy(alpha = 0.35f)
     ) { innerPadding ->
         Surface(
             modifier = Modifier
                 .padding(innerPadding)
-                .fillMaxSize()
+                .fillMaxSize(),
+            color = Color.Transparent
         ) {
             when (val state = deliveryState){
                 is DeliveryExecutiveUiState.Loading->{
