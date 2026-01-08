@@ -1,0 +1,73 @@
+<resources>
+    <string name="app_name">M.A.Admin</string>
+
+    <string name="customer">Customer</string>
+    <string name="inventory">Inventory</string>
+    <string name="add_inventory">Add Inventory</string>
+    <string name="edit_inventory">Edit Inventory</string>
+    <string name="item_name">Item Name</string>
+    <string name="opening_quantity">Opening Quantity</string>
+    <string name="gst_percent">GST Percent</string>
+    <string name="unit">Unit</string>
+    <string name="select_unit">Select Unit</string>
+    <string name="purchase">Purchase</string>
+    <string name="vendor_details">Vendor Details</string>
+    <string name="amount_details">Amount Details</string>
+
+    <string name="create_purchase">Create Purchase</string>
+    <string name="invoice_details">Invoice Details</string>
+    <string name="invoice_number_optional">Invoice Number (Optional)</string>
+    <string name="purchase_date">Purchase Date</string>
+    <string name="enter_invoice_number">Enter Invoice Number</string>
+    <string name="products">Products</string>
+    <string name="submit_purchase">Submit Purchase</string>
+    <string name="add_item">Add Item</string>
+
+    <string name="promotions">Promotional Offer</string>
+
+
+
+
+
+    <string name="back_button">Back</string>
+    <string name="select_report">Reports</string>
+
+    <string name="reports_summary">Reports Summary</string>
+    <string name="sales_register">Sales Report</string>
+    <string name="purchase_register">Purchase Report</string>
+    <string name="outstanding_dues">Outstanding Dues</string>
+    <string name="dropdown_selection_empty">Select option to view report</string>
+    <string name="empty_dues_customer">No dues recorded for this customer</string>
+    <string name="empty_dues_vendor">No dues recorded for this vendor</string>
+    <string name="stock_summary">Stock Summary</string>
+    <string name="batch_stock">Batch Summary</string>
+    <string name="customer_dropdown">Customer </string>
+    <string name="vendor_dropdown">Vendor </string>
+    <string name="product_dropdown">Product </string>
+    <string name="no_batch_data">No Batch Data Recorded </string>
+    <string name="from_date">From Date*</string>
+    <string name="to_date">To Date*</string>
+    <string name="select_date">Select Date</string>
+    <string name="select_all">Select All</string>
+    <string name="date_error">Please select valid date</string>
+    <string name="sub_total">Sub Total</string>
+    <string name="discount">Discount</string>
+    <string name="tax">Tax</string>
+    <string name="date">Date</string>
+    <string name="total_amount">Total Amount</string>
+    <string name="no_sales_data">No sales recorded</string>
+    <string name="select_customer">Select Customer</string>
+    <string name="select_vendor">Select Vendor</string>
+    <string name="dropdown_error">Please Select option</string>
+    <string name="loading">Loading…</string>
+    <string name="select_product">Select Product</string>
+    <string name="ledger">Ledger Report</string>
+    <string name="cust_vendor_ledger">Customer/Vendor Ledger </string>
+
+    <!-- Added strings for new reports -->
+    <string name="item_wise_delivery">Delivery</string>
+    <string name="item_wise_sales">Item Sales</string>
+    <string name="payment_summary">Payment Summary</string>
+
+
+</resources>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.MySplashScreen" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/app_splash</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/white</item>
+        <item name="postSplashScreenTheme">@style/Theme.AdminApp</item>
+
+    </style>
+
+    <style name="Theme.AdminApp" parent="android:Theme.Material.Light.NoActionBar" >
+        <item name="android:windowBackground">@color/surface</item>
+    </style>
+</resources>

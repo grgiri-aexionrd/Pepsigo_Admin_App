@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "636510859343",
+    "project_id": "pepsi-go",
+    "storage_bucket": "pepsi-go.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:636510859343:android:7663e5f34dd5262ae43a3a",
+        "android_client_info": {
+          "package_name": "com.pepsigo.admin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAeXz7PasV6jBiQTE59pSAIAlIfWySQlmY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:636510859343:android:53f1099f67d0148ee43a3a",
+        "android_client_info": {
+          "package_name": "com.pepsigo.delivery"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAeXz7PasV6jBiQTE59pSAIAlIfWySQlmY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
