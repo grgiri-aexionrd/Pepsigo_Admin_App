@@ -24,6 +24,7 @@ sealed class InventoryUiState{
 
     data class InventoryList(
         val items: List<InventoryListUi>,
+        val message: String? = null,
         val snackbarMessage: String? = null,
         val isError: Boolean = false
     ): InventoryUiState()
@@ -63,6 +64,11 @@ class InventoryViewModel( private val inventoryRepo: InventoryRepo) : ViewModel(
         getInventories()
     }
 
+    fun refresh() {
+        getInventories()
+    }
+
+
     fun getInventories(message: String? = null, isError: Boolean = false) {
         viewModelScope.launch {
             _uiState.value = InventoryUiState.Loading
@@ -70,7 +76,10 @@ class InventoryViewModel( private val inventoryRepo: InventoryRepo) : ViewModel(
             result
                 .onSuccess { items ->
                     val state = InventoryUiState.InventoryList(
-                        items = items,snackbarMessage = message, isError = isError
+                        items = items,
+                        message = null,
+                        snackbarMessage = message,
+                        isError = isError
                     )
                     lastListState = state
                     _uiState.value = state
@@ -78,6 +87,7 @@ class InventoryViewModel( private val inventoryRepo: InventoryRepo) : ViewModel(
                 .onFailure { error ->
                     _uiState.value = InventoryUiState.InventoryList(
                         items = emptyList(),
+                        message = (error as AppError).userFriendlyMessage,
                         snackbarMessage = (error as AppError).userFriendlyMessage,
                         isError = true
                     )
@@ -149,7 +159,15 @@ class InventoryViewModel( private val inventoryRepo: InventoryRepo) : ViewModel(
 
         if (form.name.isBlank()) { errors["name"] = "Item Name is required"  }
         if (form.id == null){
-            if (form.quantity.isBlank()) { errors["quantity"] = "Quantity is required" }
+            if (form.quantity.isBlank()) {
+                errors["quantity"] = "Quantity is required"
+            } else {
+                val qty = form.quantity.toIntOrNull()
+                when {
+                    qty == null -> errors["quantity"] = "Quantity must be a number"
+                    qty < 0 -> errors["quantity"] = "Quantity cannot be less than 0"
+                }
+            }
             if (form.unit.isBlank()) { errors["unit"] = "Unit is required" }
         }
         if (form.gst.isBlank()) { errors["gst"] = "GST is required" }

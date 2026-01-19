@@ -51,6 +51,7 @@ fun DeliveryExecutiveEditScreen(
             onLocationChange = { /* Do Nothing */ },
             onSave = { form -> onSave(form) },
             onCancel = {  viewModel.getDeliveryExecutives()  },
+            locationError = null,
             modifier = modifier
         )
     }

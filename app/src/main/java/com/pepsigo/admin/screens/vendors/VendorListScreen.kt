@@ -34,10 +34,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.pepsigo.admin.model.User
 import com.pepsigo.admin.screens.customer.SearchBarSection
+import com.pepsigo.admin.screens.reports.DropDownErrorCard
 
 @Composable
 fun VendorListScreen(
     vendors: List<User>,
+    message: String? = null,
     onEditVendor: (User) -> Unit,
     onToggle: (id: Int) -> Unit,
     modifier: Modifier = Modifier
@@ -60,7 +62,13 @@ fun VendorListScreen(
                     onQueryChange = { searchQuery = it }
                 )
             }
-            // 📋 List of vendors
+
+            if(message != null) {
+                item {
+                    DropDownErrorCard(message)
+                }
+            }else{
+                // 📋 List of vendors
             items(filteredVendors) { vendor ->
                 VendorRow(
                     vendor = vendor,
@@ -69,6 +77,7 @@ fun VendorListScreen(
                     onClick = { selectedVendor = vendor }
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            }
             }
         }
     }

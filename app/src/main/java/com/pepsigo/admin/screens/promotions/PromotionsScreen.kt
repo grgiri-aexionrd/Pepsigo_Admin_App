@@ -12,23 +12,35 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -38,15 +50,19 @@ import com.pepsigo.admin.R
 import com.pepsigo.admin.domainLayer.OfferUi
 import com.pepsigo.admin.screens.commonComponents.DropDown
 import com.pepsigo.admin.screens.commonComponents.ReportTopAppBar
+import com.pepsigo.admin.screens.customer.CustomerUiState
 import com.pepsigo.admin.ui.theme.inversePrimaryLight
 
 @Composable
 fun PromotionsScreen(
     viewModel: PromotionalOfferViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToCreatePromotions: () -> Unit
 ) {
 
     val state by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val refreshState = rememberPullToRefreshState()
 
     Scaffold(
         topBar = {
@@ -57,136 +73,176 @@ fun PromotionsScreen(
                 onBackClick = onNavigateBack,
             )
         },
-        snackbarHost = { },
-        containerColor = inversePrimaryLight.copy(alpha = 0.35f)
-    ) {innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize(),
-            contentPadding = PaddingValues(16.dp)
-        ){
-            //customer dropdown
-            item {
-                Text(
-                    text = stringResource(id = R.string.customer_dropdown),
-
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                DropDown(
-                    dropDown = state.customerDropDown,
-                    error = false,
-                    label = stringResource(id = R.string.select_customer),
-                    selected = state.selectedCustomer,
-                    onSelected = { viewModel.updateSelectedCustomer(it) },
-                    labelExtractor = { it.name },
-                    isCreatePurchase = true
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
+        floatingActionButton = {
+            FloatingActionButton(onClick = onNavigateToCreatePromotions ) {
+                Icon(Icons.Default.Add, contentDescription = "Add Route")
             }
+        },
+        snackbarHost = {
+            SnackbarHost(snackbarHostState) { data ->
+                val isError = state.isError
+                Snackbar(
+                    snackbarData = data,
+                    containerColor = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                    contentColor = if (isError) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.wrapContentWidth()
+                        .padding(horizontal = 16.dp)
+                )
 
-            item {
-                Row(
-                    modifier = Modifier.padding(8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-
-                ) {
-                    OutlinedButton(
-                        onClick = { viewModel.updateSelectedCustomer(null) },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Clear")
-                    }
-                    Spacer(modifier = Modifier.weight(0.1f))
-
-                    Button(
-                        onClick = { viewModel.getOffers(state.selectedCustomer?.id) },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Get Offers")
-                    }
-
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.inverseOnSurface
+    ) { innerPadding ->
+        PullToRefreshBox(
+            isRefreshing = state.isRefreshing,
+            onRefresh = { viewModel.refresh() },
+            modifier = Modifier.fillMaxSize(),
+            state = refreshState
+        ) {
+            state.snackbarMessage?.let { message ->
+                LaunchedEffect(message) {
+                    snackbarHostState.showSnackbar(
+                        message = message,
+                        duration = SnackbarDuration.Short
+                    )
+                    viewModel.clearSnackbarMessage()
                 }
-                HorizontalDivider()
-                Spacer(modifier = Modifier.height(16.dp))
             }
+            LazyColumn(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize(),
+                contentPadding = PaddingValues(16.dp)
+            ) {
 
-            item{
-                Text("Offers for ${state.selectedCustomer?.name?:"N/A"}",
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                Spacer(modifier =Modifier.height(16.dp))
-            }
-
-            // 1️⃣ Loading state
-            if (state.isLoading) {
+                //customer dropdown
                 item {
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
-                return@LazyColumn   // ⬅ prevents rendering further items
-            }
+                    Text(
+                        text = stringResource(id = R.string.customer_dropdown),
 
-            // 2️⃣ No customer selected
-            if (state.selectedCustomer == null) {
-                item {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface
-                        ),
-                        elevation = CardDefaults.cardElevation(4.dp),
-                        border = CardDefaults.outlinedCardBorder()
-                    ) {
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    DropDown(
+                        dropDown = state.customerDropDown,
+                        error = state.selectedCustomerError,
+                        label = stringResource(id = R.string.select_customer),
+                        selected = state.selectedCustomer,
+                        onSelected = { viewModel.updateSelectedCustomer(it) },
+                        labelExtractor = { it.name },
+                        isCreatePurchase = true
+                    )
+                    if (state.selectedCustomerError) {
                         Text(
-                            "Select a customer to view offers",
-                            modifier = Modifier.padding(16.dp)
+                            text = stringResource(id = R.string.dropdown_error),
+                            color = MaterialTheme.colorScheme.error
                         )
                     }
-                }
-                return@LazyColumn
-            }
 
-            // 3️⃣ No offers found
-            if (state.offerList.isEmpty()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
                 item {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface
-                        ),
-                        elevation = CardDefaults.cardElevation(4.dp),
-                        border = CardDefaults.outlinedCardBorder()
+                    Row(
+                        modifier = Modifier.padding(8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+
                     ) {
-                        Text(
-                            "No offers available for this customer",
-                            modifier = Modifier.padding(16.dp)
-                        )
+                        OutlinedButton(
+                            onClick = { viewModel.updateSelectedCustomer(null) },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Clear")
+                        }
+                        Spacer(modifier = Modifier.weight(0.1f))
+
+                        Button(
+                            onClick = { viewModel.getOffers(state.selectedCustomer?.id) },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Get Offers")
+                        }
+
                     }
+                    HorizontalDivider()
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
-                return@LazyColumn
-            }
 
-            // 4️⃣ Show offer cards
-            items(state.offerList) { offer ->
-                OfferCard(offer)
+                item {
+                    Text(
+                        "Offers for ${state.selectedCustomer?.name ?: "N/A"}",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
 
-            }
+                // 1️⃣ Loading state
+                if (state.isLoading) {
+                    item {
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+                    return@LazyColumn   // ⬅ prevents rendering further items
+                }
+
+                // 2️⃣ No customer selected
+                if ( !state.offerFetched || state.selectedCustomer == null) {
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surface
+                            ),
+                            elevation = CardDefaults.cardElevation(4.dp),
+                            border = CardDefaults.outlinedCardBorder()
+                        ) {
+                            Text(
+                                "Select a customer to view offers",
+                                modifier = Modifier.padding(16.dp)
+                            )
+                        }
+                    }
+                    return@LazyColumn
+                }
+
+                // 3️⃣ No offers found
+                if ( state.offerFetched && state.offerList.isEmpty() ) {
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surface
+                            ),
+                            elevation = CardDefaults.cardElevation(4.dp),
+                            border = CardDefaults.outlinedCardBorder()
+                        ) {
+                            Text(
+                                "No offers available for this customer",
+                                modifier = Modifier.padding(16.dp)
+                            )
+                        }
+                    }
+                    return@LazyColumn
+                }
+
+                // 4️⃣ Show offer cards
+                items(state.offerList) { offer ->
+                    OfferCard(offer)
+                }
 
             }
         }
+    }
 
     }
 

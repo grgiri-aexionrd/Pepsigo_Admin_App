@@ -25,6 +25,7 @@ sealed class DeliveryExecutiveUiState {
     data class DeliveryExecutiveList(
         val isLoading: Boolean = false,
         val deliveryExecutives: List<DeliveryExecutiveUiModel> = emptyList(),
+        val message: String? = null,
         val snackbarMessage: String? = null,
         val isError: Boolean = false
     ):DeliveryExecutiveUiState()
@@ -68,6 +69,10 @@ class DeliveryExecutiveViewModel(
         getDeliveryExecutives()
     }
 
+    fun refresh() {
+        getDeliveryExecutives()
+    }
+
     fun getDeliveryExecutives() {
         _uiState.value = DeliveryExecutiveUiState.Loading
         viewModelScope.launch {
@@ -77,6 +82,7 @@ class DeliveryExecutiveViewModel(
                     _uiState.value = DeliveryExecutiveUiState.DeliveryExecutiveList(
                         isLoading = false,
                         deliveryExecutives = executivesResult.data,
+                        message = executivesResult.error?.userFriendlyMessage,
                         snackbarMessage = executivesResult.error?.userFriendlyMessage,
                         isError = executivesResult.error != null
                     )
@@ -84,6 +90,7 @@ class DeliveryExecutiveViewModel(
                 .onFailure { error ->
                     _uiState.value = DeliveryExecutiveUiState.DeliveryExecutiveList(
                         isLoading = false,
+                        message = (error as AppError).userFriendlyMessage,
                         snackbarMessage = (error as AppError).userFriendlyMessage,
                         isError = true
                     )
@@ -119,6 +126,7 @@ class DeliveryExecutiveViewModel(
                 .onFailure { error ->
                     _uiState.value = DeliveryExecutiveUiState.DeliveryExecutiveList(
                         isLoading = false,
+                        message = (error as AppError).userFriendlyMessage,
                         snackbarMessage = (error as AppError).userFriendlyMessage,
                         isError = true
                     )
@@ -153,7 +161,7 @@ class DeliveryExecutiveViewModel(
         }
 
         _uiState.value = current.copy(isLoading = true)
-
+        Log.d("DeliveryExecutiveViewModel", "Saving delivery executive : $form")
 
         viewModelScope.launch {
             val result = deliveryUseCase.addDeliveryExecutive(form)
@@ -203,7 +211,7 @@ class DeliveryExecutiveViewModel(
         val errors= mutableMapOf<String, String>()
         if (form.name.isBlank()) errors["name"] = "Name is required"
         if (form.email.isBlank()) errors["email"] = "Email is required"
-        if (form.mobile.isBlank()) errors["mobile"] = "Mobile is required"
+        if (form.mobile.isBlank() || form.mobile.length < 10 ) errors["mobile"] = "Mobile is required"
 
         if (errors.isNotEmpty()) {
             _uiState.value = (_uiState.value as? DeliveryExecutiveUiState.EditDelForm)?.copy(

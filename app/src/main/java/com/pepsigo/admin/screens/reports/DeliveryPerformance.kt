@@ -65,7 +65,8 @@ fun DeliveryPerformanceScreen(
                 desc = stringResource(R.string.delivery_performance),
                 onBackClick = { onNavigateBack() }
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.inverseOnSurface
     ) { innerPadding ->
         PullToRefreshBox(
             state = refreshState,
@@ -76,7 +77,7 @@ fun DeliveryPerformanceScreen(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(inversePrimaryLight.copy(alpha = 0.35f))
+//                    .background(inversePrimaryLight.copy(alpha = 0.35f))
                     .padding(innerPadding)
                     .padding(16.dp)
             ) {
@@ -124,7 +125,8 @@ fun DeliveryPerformanceScreen(
 
                 if (state.isError) {
                     item {
-                        Text(text = state.snackbarMessage ?: "Error", modifier = Modifier.padding(12.dp))
+                        Text(text = state.snackbarMessage ?: "Error", modifier = Modifier.align(Alignment.Center)
+                            .padding(12.dp))
                     }
                 }
             }

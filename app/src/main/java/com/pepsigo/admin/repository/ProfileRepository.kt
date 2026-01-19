@@ -8,6 +8,8 @@ import com.pepsigo.admin.model.ProfileEmailPasswordUpdateResponse
 import com.pepsigo.admin.model.ProfileUpdateRequest
 import com.pepsigo.admin.network.ApiService
 import com.pepsigo.admin.utils.AppError
+import com.pepsigo.admin.utils.safeString
+import com.pepsigo.admin.utils.safeText
 import retrofit2.HttpException
 import java.io.IOException
 
@@ -17,7 +19,23 @@ class ProfileRepository( private val apiService: ApiService) {
        return try {
            val response = apiService.getProfile()
            Log.d("ProfileRepository", "API response: $response")
-           Result.success(response)
+           val profile = ProfileRequest(
+               id = response.id,
+               name = response.name,
+               email = response.email,
+               mobile = response.mobile,
+               role = response.role,
+               business = response.business.safeText(),
+               address1 = response.address1.safeText(),
+               address2 = response.address2.safeText(),
+               state = response.state.safeText(),
+               pincode = response.pincode.safeText(),
+               latitude = response.latitude,
+               longitude = response.longitude,
+               enabled = response.enabled,
+               fullAddress = response.fullAddress
+           )
+           Result.success(profile)
        } catch (e: IOException) {
            Result.failure(AppError.Network("No internet connection"))
        } catch (e: HttpException) {

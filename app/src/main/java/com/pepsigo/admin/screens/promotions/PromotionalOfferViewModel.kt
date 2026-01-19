@@ -20,10 +20,13 @@ import kotlinx.coroutines.launch
 data class PromotionalOfferUiState(
     val customerDropDown: List<User> = emptyList(),
     val selectedCustomer: User? = null,
+    val selectedCustomerError: Boolean = false,
     val offerList: List<OfferUi> = emptyList(),
     val isLoading: Boolean = false,
     val snackbarMessage: String? = null,
-    val isError: Boolean = false
+    val isError: Boolean = false,
+    val isRefreshing: Boolean = false,
+    val offerFetched: Boolean = false
 )
 
 class PromotionalOfferViewModel(private val useCase: PromotionalOfferUseCase): ViewModel() {
@@ -34,21 +37,37 @@ class PromotionalOfferViewModel(private val useCase: PromotionalOfferUseCase): V
         getCustomers()
         }
 
+    fun refresh(){
+        _uiState.update {
+            it.copy(isRefreshing = true)
+        }
+        getCustomers()
+    }
+
     fun getCustomers(){
         viewModelScope.launch{
+            _uiState.value = _uiState.value.copy(
+                isLoading = true
+            )
             val result = useCase.getCustomers()
             Log.d("PromotionalOfferViewModel", "getCustomers: $result")
             result
                 .onSuccess { customers ->
                     _uiState.value = _uiState.value.copy(
                         customerDropDown = customers,
-                        isError = false
+                        isError = false,
+                        isLoading = false,
+                        isRefreshing = false,
+                        offerFetched = false
                     )
                 }
                 .onFailure {error ->
                     _uiState.value = _uiState.value.copy(
                         snackbarMessage = (error as AppError).userFriendlyMessage,
-                        isError = true
+                        isError = true,
+                        isLoading = false,
+                        isRefreshing = false,
+                        offerFetched = false
                     )
                 }
         }
@@ -57,7 +76,10 @@ class PromotionalOfferViewModel(private val useCase: PromotionalOfferUseCase): V
     fun updateSelectedCustomer(customer: User?){
         Log.d("PromotionalOfferViewModel", "updateSelectedCustomer: $customer")
         _uiState.update {
-            it.copy(selectedCustomer = customer)        }
+            it.copy(selectedCustomer = customer,
+                selectedCustomerError = false,
+                offerFetched = false
+            )        }
     }
 
     fun getOffers(customerId: Int?) {
@@ -65,26 +87,41 @@ class PromotionalOfferViewModel(private val useCase: PromotionalOfferUseCase): V
         _uiState.update {
             it.copy(isLoading = true)
         }
-        if (customerId == null) return
-        viewModelScope.launch {
-            val result = useCase.getPromotionalOffers(customerId)
-            Log.d("PromotionalOfferViewModel", "getOffers: $result")
-            result.onSuccess { offerList ->
-                _uiState.value = _uiState.value.copy(
-                    offerList = offerList,
+
+        // if no customer selected show error
+        if (customerId == null) {
+            _uiState.update {
+                it.copy(
+                    selectedCustomerError = true,
                     isLoading = false,
+                    offerFetched = false
                 )
             }
-                .onFailure { error ->
+            return
+        }
+
+            viewModelScope.launch {
+                val result = useCase.getPromotionalOffers(customerId)
+                Log.d("PromotionalOfferViewModel", "getOffers: $result")
+                result.onSuccess { offerList ->
                     _uiState.value = _uiState.value.copy(
-                        snackbarMessage = (error as AppError).userFriendlyMessage,
+                        offerList = offerList,
                         isLoading = false,
-                        isError = true
+                        offerFetched = true
                     )
                 }
+                    .onFailure { error ->
+                        _uiState.value = _uiState.value.copy(
+                            snackbarMessage = (error as AppError).userFriendlyMessage,
+                            isLoading = false,
+                            isError = true,
+                            offerFetched = false
+                        )
+                    }
 
+            }
         }
-    }
+
 
 
     fun clearSnackbarMessage() {

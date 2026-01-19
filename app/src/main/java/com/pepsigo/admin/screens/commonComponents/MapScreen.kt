@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -26,6 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.PinDrop
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -40,12 +42,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.pepsigo.admin.utils.DEFAULT_LOCATION
 import com.pepsigo.admin.utils.ensureGpsEnabled
 import com.pepsigo.admin.utils.fetchCurrentLocation
@@ -60,31 +68,32 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberUpdatedMarkerState
 import com.google.android.libraries.places.api.model.Place
+import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.ktx.model.cameraPosition
+import com.pepsigo.admin.R
+import kotlinx.coroutines.launch
 
 @Composable
 fun MapScreen(
-    placesClient: PlacesClient,
+    initialLocation: LatLng?,
     onLocationPicked: (Double, Double) -> Unit,
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
     val activity = context as Activity
+    val coroutineScope = rememberCoroutineScope()
 
-    var searchQuery by remember { mutableStateOf("") }
-    var predictions by remember { mutableStateOf<List<AutocompletePrediction>>(emptyList()) }
-    var selectedPosition by remember { mutableStateOf<LatLng?>(null) }
+    var selectedPosition by remember { mutableStateOf(initialLocation) }
     val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(DEFAULT_LOCATION, 14f)
+        position = CameraPosition.fromLatLngZoom(initialLocation ?: DEFAULT_LOCATION, 14f)
     }
-    val markerState = rememberUpdatedMarkerState(
-        position = selectedPosition ?: DEFAULT_LOCATION
-    )
+
 
     // 🔹 Permission launcher
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { granted ->
-            if (granted) {
+            if (granted && selectedPosition == null) {
                 ensureGpsEnabled(activity) {
                     fetchCurrentLocation(context) { latLng ->
                         selectedPosition = latLng
@@ -98,12 +107,17 @@ fun MapScreen(
 
     // 🔹 On screen open
     LaunchedEffect(Unit) {
-        if (searchQuery.isBlank()) {
-            if (ContextCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
+        when {
+            initialLocation != null -> {
+                selectedPosition = initialLocation
+                cameraPositionState.position =
+                    CameraPosition.fromLatLngZoom(initialLocation, 15f)
+            }
+
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED -> {
                 ensureGpsEnabled(activity) {
                     fetchCurrentLocation(context) { latLng ->
                         selectedPosition = latLng
@@ -111,7 +125,8 @@ fun MapScreen(
                             CameraPosition.fromLatLngZoom(latLng, 15f)
                     }
                 }
-            } else {
+            }
+            else -> {
                 permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
             }
         }
@@ -125,107 +140,70 @@ fun MapScreen(
                 .statusBarsPadding()
                 .navigationBarsPadding(),
             cameraPositionState = cameraPositionState,
-            onMapClick = { latLng ->
-                selectedPosition = latLng
-                markerState.position = latLng
-            }
-        ) {
-            selectedPosition?.let {
-                Marker(
-                    state = markerState,
-                    draggable = true
-                )
-            }
-        }
+            uiSettings = MapUiSettings(
+                zoomControlsEnabled = false,
+                myLocationButtonEnabled = false
+            )
+        )
 
-        // 🔹 Floating Search Bar + Back Arrow
-        Column(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .statusBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // Back arrow in floating circle
-                IconButton(
-                    onClick = onBack,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .background(MaterialTheme.colorScheme.onPrimary, CircleShape)
+        // 🔹 Floating Search Bar + Back Arrow{
+            // Back arrow in floating circle
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .statusBarsPadding()
+                    .padding(16.dp)
+                    .size(48.dp)
+                    .background(MaterialTheme.colorScheme.onPrimary, CircleShape)
 //                        .shadow(4.dp, CircleShape)
-                ) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                }
-
-                // Rounded search bar
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { query ->
-                        searchQuery = query
-                        if (query.isNotBlank()) {
-                            val request = FindAutocompletePredictionsRequest.builder()
-                                .setQuery(query)
-                                .build()
-                            placesClient.findAutocompletePredictions(request)
-                                .addOnSuccessListener { response ->
-                                    predictions = response.autocompletePredictions
-                                }
-                                .addOnFailureListener { predictions = emptyList() }
-                        } else predictions = emptyList()
-                    },
-                    placeholder = { Text("Search location") },
-                    leadingIcon = { Icon(Icons.Default.Search, null) },
-                    singleLine = true,
-                    shape = RoundedCornerShape(32.dp),
-                    modifier = Modifier
-                        .weight(1f)
-//                        .shadow(6.dp, RoundedCornerShape(32.dp))
-                        .background(MaterialTheme.colorScheme.onPrimary, RoundedCornerShape(32.dp))
-                )
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
             }
 
-            // 🔹 Predictions dropdown
-            if (predictions.isNotEmpty()) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    elevation = CardDefaults.cardElevation(6.dp)
-                ) {
-                    LazyColumn {
-                        items(predictions) { prediction ->
-                            Text(
-                                text = prediction.getFullText(null).toString(),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        val request = FetchPlaceRequest.builder(
-                                            prediction.placeId,
-                                            listOf(Place.Field.LOCATION)
-                                        ).build()
-                                        placesClient.fetchPlace(request)
-                                            .addOnSuccessListener { response ->
-                                                response.place.location?.let { latLng ->
-                                                    selectedPosition = latLng
-                                                    markerState.position = latLng
-                                                    cameraPositionState.position =
-                                                        CameraPosition.fromLatLngZoom(latLng, 15f)
-                                                    predictions = emptyList()
-                                                    searchQuery =
-                                                        prediction.getFullText(null).toString()
-                                                }
-                                            }
-                                    }
-                                    .padding(12.dp)
+
+        // 📍 Uber-style fixed pickup pin
+        Column(
+            modifier = Modifier.align(Alignment.Center)
+                .clickable(
+                    onClick = {
+                        val newLocation = cameraPositionState.position.target
+                        coroutineScope.launch {
+                            cameraPositionState.animate(
+                                CameraUpdateFactory.newLatLngZoom(newLocation, 18f),
+                                durationMs = 600
                             )
                         }
+                        selectedPosition = newLocation
                     }
-                }
-            }
+
+                ),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+            // Pin head (replace drawable if needed)
+            Icon(
+                Icons.Default.PinDrop,
+//                painter = painterResource(R.drawable.ic_pickup_pin),
+                contentDescription = null,
+                tint = Color.Red,
+                modifier = Modifier.size(40.dp)
+            )
+            // Stem line
+            Box(
+                modifier = Modifier
+                    .width(2.dp)
+                    .height(22.dp)
+                    .background(Color.Red)
+            )
+
+            // X mark (exact ground point)
+            Text(
+                text = "✕",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
         }
 
 // 🔹 Floating Bottom Button
@@ -248,9 +226,13 @@ fun MapScreen(
 
     }
 
-    // 🔹 Sync marker with selected position
-    LaunchedEffect(markerState.position) {
-        selectedPosition = markerState.position
+    // 🔹 Update selected position when camera stops moving
+    LaunchedEffect(cameraPositionState.isMoving) {
+        if (!cameraPositionState.isMoving) {
+            selectedPosition = cameraPositionState.position.target
+        }
     }
+
+
 
 }

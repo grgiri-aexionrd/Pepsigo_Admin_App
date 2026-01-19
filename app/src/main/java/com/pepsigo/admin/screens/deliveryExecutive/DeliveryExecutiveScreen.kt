@@ -28,6 +28,8 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -48,6 +50,7 @@ fun DeliveryExecutiveScreen(
 ) {
     val deliveryState by viewModel.deliveryUiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val refreshState = rememberPullToRefreshState()
 
     Scaffold(
         topBar = {
@@ -81,16 +84,22 @@ fun DeliveryExecutiveScreen(
                 )
             }
         },
-        containerColor = inversePrimaryLight.copy(alpha = 0.35f)
+        containerColor = MaterialTheme.colorScheme.inverseOnSurface
     ) { innerPadding ->
-        Surface(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize(),
-            color = Color.Transparent
+        PullToRefreshBox(
+            isRefreshing = deliveryState is DeliveryExecutiveUiState.Loading,
+            onRefresh = {  viewModel.refresh()  },
+            state = refreshState,
+            modifier = Modifier.padding(innerPadding)
         ) {
-            when (val state = deliveryState){
-                is DeliveryExecutiveUiState.Loading->{
+            Surface(
+                modifier = Modifier
+//                    .padding(innerPadding)
+                    .fillMaxSize(),
+                color = Color.Transparent
+            ) {
+                when (val state = deliveryState) {
+                    is DeliveryExecutiveUiState.Loading -> {
 
                         Box(
                             modifier = Modifier.fillMaxSize(),
@@ -101,71 +110,74 @@ fun DeliveryExecutiveScreen(
                         }
                     }
 
-                is DeliveryExecutiveUiState.DeliveryExecutiveList -> {
-                    DeliveryExecutiveListScreen(
-                        deliveryExecutives = state.deliveryExecutives,
-                        onEdit = {id -> viewModel.getDeliveryExecutiveById(id) },
-                        onToggle = {exec -> viewModel.toggleDeliveryExecutiveStatus(exec) },
+                    is DeliveryExecutiveUiState.DeliveryExecutiveList -> {
+                        DeliveryExecutiveListScreen(
+                            deliveryExecutives = state.deliveryExecutives,
+                            message = state.message,
+                            onEdit = { id -> viewModel.getDeliveryExecutiveById(id) },
+                            onToggle = { exec -> viewModel.toggleDeliveryExecutiveStatus(exec) },
 //                        onRefresh = { viewModel.getDeliveryExecutives() }
-                        modifier = Modifier.padding(16.dp)
-                    )
-                    state.snackbarMessage?.let { message ->
-                        LaunchedEffect(message) {
-                            snackbarHostState.showSnackbar(
-                                message = message,
-                                duration = SnackbarDuration.Short
-                            )
-//                            viewModel::clearSnackbarMessage
-                            viewModel.clearSnackbarMessage()
-                        }
-                    }
-                }
-                is DeliveryExecutiveUiState.AddDelForm -> {
-                    DeliveryExecutiveAddScreen(
-                        viewModel =viewModel,
-                        state = state,
-                        onSave = { form -> viewModel.saveDeliveryExecutive(form) },
-                        modifier = Modifier.padding(16.dp)
-                    )
-                    state.snackbarMessage?.let { message ->
-                        LaunchedEffect(message) {
-                            val job = launch {
+                            modifier = Modifier.padding(16.dp)
+                        )
+                        state.snackbarMessage?.let { message ->
+                            LaunchedEffect(message) {
                                 snackbarHostState.showSnackbar(
                                     message = message,
-                                    withDismissAction = false,
-                                    duration = SnackbarDuration.Indefinite // control manually
+                                    duration = SnackbarDuration.Short
                                 )
+                                viewModel.clearSnackbarMessage()
                             }
-
-                            // Wait custom duration (e.g., 1.5s)
-                            delay(1000)
-                            snackbarHostState.currentSnackbarData?.dismiss()
-
-                            viewModel.clearSnackbarMessage()
                         }
                     }
-                }
-            is DeliveryExecutiveUiState.EditDelForm -> {
-                DeliveryExecutiveEditScreen(
-                    viewModel = viewModel,
-                    state = state ,
-                    onSave = { form -> viewModel.updateDeliveryExecutive(form)  },
-                    modifier = Modifier.padding(16.dp)
-                )
-                state.snackbarMessage?.let { message ->
-                    LaunchedEffect(message) {
-                        snackbarHostState.showSnackbar(
-                            message = message,
-                            duration = SnackbarDuration.Short
+
+                    is DeliveryExecutiveUiState.AddDelForm -> {
+                        DeliveryExecutiveAddScreen(
+                            viewModel = viewModel,
+                            state = state,
+                            onSave = { form -> viewModel.saveDeliveryExecutive(form) },
+                            modifier = Modifier.padding(16.dp)
                         )
-//                            viewModel::clearSnackbarMessage
-                        viewModel.clearSnackbarMessage()
+                        state.snackbarMessage?.let { message ->
+                            LaunchedEffect(message) {
+                                val job = launch {
+                                    snackbarHostState.showSnackbar(
+                                        message = message,
+                                        withDismissAction = false,
+                                        duration = SnackbarDuration.Indefinite // control manually
+                                    )
+                                }
+
+                                // Wait custom duration (e.g., 1.5s)
+                                delay(1000)
+                                snackbarHostState.currentSnackbarData?.dismiss()
+
+                                viewModel.clearSnackbarMessage()
+                            }
+                        }
                     }
+
+                    is DeliveryExecutiveUiState.EditDelForm -> {
+                        DeliveryExecutiveEditScreen(
+                            viewModel = viewModel,
+                            state = state,
+                            onSave = { form -> viewModel.updateDeliveryExecutive(form) },
+                            modifier = Modifier.padding(16.dp)
+                        )
+                        state.snackbarMessage?.let { message ->
+                            LaunchedEffect(message) {
+                                snackbarHostState.showSnackbar(
+                                    message = message,
+                                    duration = SnackbarDuration.Short
+                                )
+//                            viewModel::clearSnackbarMessage
+                                viewModel.clearSnackbarMessage()
+                            }
+                        }
+                    }
+
                 }
-            }
 
             }
-
         }
 
     }

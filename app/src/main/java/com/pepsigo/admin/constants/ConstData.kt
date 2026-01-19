@@ -6,8 +6,10 @@ import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.PointOfSale
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Store
 import androidx.compose.ui.text.input.KeyboardType
@@ -20,6 +22,13 @@ import com.pepsigo.admin.model.UserForm
 
 val modalDrawerGroups = listOf(
     DrawerGroup(
+        "Transaction",
+        listOf(
+            DrawerItem("Sales", "sales", Icons.Default.PointOfSale),
+            DrawerItem("Payment", "payment", Icons.Default.Payment),
+        )
+    ),
+    DrawerGroup(
         "Operations",
         listOf(
             DrawerItem("Location", "location", Icons.Default.Place),
@@ -31,18 +40,16 @@ val modalDrawerGroups = listOf(
     DrawerGroup(
         "Inventory",
         listOf(
-//            DrawerItem("Products", "products", Icons.Default.Inventory),
             DrawerItem("Inventory", "inventory", Icons.Default.Inventory),
             DrawerItem("Purchase", "purchase", Icons.Default.ShoppingCart),
             DrawerItem("Vendors", "vendors", Icons.Default.Store)
         )
     ),
     DrawerGroup(
-        "Sales & Marketing",
+        "Customers & Marketing",
         listOf(
             DrawerItem("Customers", "customers", Icons.Default.People),
             DrawerItem("Promotions", "promotions", Icons.Default.Campaign),
-//            DrawerItem("Special Prices", "special_prices", Icons.Default.LocalOffer)
         )
     ),
     DrawerGroup(

@@ -7,24 +7,24 @@ data class PurchasePaginatedResponseDto (
     val currentPage: Int,
     val data : List<PurchaseDto>,
     @SerializedName("first_page_url")
-    val firstPageUrl: String,
+    val firstPageUrl: String?,
     @SerializedName("from")
-    val from: Int,
+    val from: Int?,
     @SerializedName("last_page")
     val lastPage: Int,
     @SerializedName("last_page_url")
-    val lastPageUrl: String,
+    val lastPageUrl: String?,
     val links: List<PageLink>,
     @SerializedName("next_page_url")
-    val nextPageUrl: String,
+    val nextPageUrl: String?,
     @SerializedName("path")
     val path: String,
     @SerializedName("per_page")
     val perPage: Int,
     @SerializedName("prev_page_url")
-    val prevPageUrl: String,
+    val prevPageUrl: String?,
     @SerializedName("to")
-    val to: Int,
+    val to: Int?,
     @SerializedName("total")
     val total: Int
 )
@@ -32,7 +32,7 @@ data class PurchasePaginatedResponseDto (
 data class PurchaseDto(
     val id: Int,
     @SerializedName("invoice_number")
-    val invoiceNumber: String,
+    val invoiceNumber: String?,
     @SerializedName("vendor_id")
     val vendorId: Int,
     @SerializedName("purchase_date")
@@ -54,9 +54,9 @@ data class PurchaseDto(
 )
 
 data class PageLink(
-    val url: String,
+    val url: String?,
     val label: String,
-    val page: Int,
+    val page: Int?,
     val active: Boolean
 )
 

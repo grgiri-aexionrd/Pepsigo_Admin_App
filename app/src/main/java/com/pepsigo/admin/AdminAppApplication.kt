@@ -16,32 +16,16 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
 
-class AdminAppApplication: Application() {
+class AdminAppApplication : Application() {
     lateinit var container: AppContainer
-//    lateinit var placesClient: PlacesClient
+
     @OptIn(InternalComposeUiApi::class, DelicateCoroutinesApi::class)
     override fun onCreate() {
         super.onCreate()
 
         Log.d("AdminAppApplication", "onCreate called")
 
-//        container = if (BuildConfig.DEBUG) {
-//            FakeAppContainer(this)   // ✅ fake data for debug/emulator
-//        } else {
-//            AppContainer(this)       // ✅ real API for release
-//        }
-
         container = AppContainer(this)       // ✅ real API for release
-
-
-        // 🔹 Create a single client for reuse
-//        placesClient = Places.createClient(this)
-
-        // 👇 Fix: force Maps to initialize on main thread
-//        Handler(Looper.getMainLooper()).post {
-//            MapsInitializer.initialize(applicationContext)
-//        }
-
 
     }
 }

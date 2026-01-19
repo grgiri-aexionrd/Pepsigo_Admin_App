@@ -21,9 +21,13 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,6 +46,21 @@ fun PurchaseReportScreen(
     onNavigateBack: () -> Unit
 ) {
     val purchaseReport by viewModel.purchaseReport.collectAsState()
+    val refreshState = rememberPullToRefreshState()
+
+    val filteredVendors by remember {
+        derivedStateOf {
+            if (purchaseReport.searchQuery.isBlank()) {
+                purchaseReport.dropDown.take(50)
+            } else {
+                purchaseReport.dropDown
+                    .filter {
+                        it.name.contains(purchaseReport.searchQuery, true)
+                    }
+                    .take(50)
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -51,143 +70,81 @@ fun PurchaseReportScreen(
                 desc = stringResource(R.string.purchase_register),
                 onBackClick = { onNavigateBack() }
             )
-        }
-    ){innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-//                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ){
-            Card(
+        },
+        containerColor = MaterialTheme.colorScheme.inverseOnSurface
+    ) { innerPadding ->
+        PullToRefreshBox(
+            isRefreshing = purchaseReport.isRefreshing,
+            onRefresh = { viewModel.refresh() },
+            modifier = Modifier.fillMaxSize(),
+            state = refreshState
+        ) {
+            LazyColumn(
                 modifier = Modifier
-                    .fillMaxWidth(),
-//                    .padding(16.dp)
-
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp) // minimal elevation for separation
-            ){
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-
-                    ) {
-                    Text(
-                        text = stringResource(R.string.from_date),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    DockedDatePicker(
-                        label = stringResource(R.string.select_date),
-                        error = purchaseReport.fromDateError,
-                        modifier = Modifier.fillMaxWidth(),
-                        onDateSelected = { date -> viewModel.setFromDate(date) }
-                    )
-                    Text(
-                        text = stringResource(R.string.to_date),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    DockedDatePicker(
-                        label = stringResource(R.string.select_date),
-                        error = purchaseReport.toDateError,
-                        modifier = Modifier.fillMaxWidth(),
-                        onDateSelected = { date -> viewModel.setToDate(date) }
-                    )
-                    Text(
-                        text = stringResource(R.string.vendor_dropdown),
-                        style = MaterialTheme.typography.bodyLarge,
-
-                        )
-                    Log.d(
-                        "PurchaseReportScreen",
-                        "Rendering DropDown with selected: ${purchaseReport.selected}, options: ${purchaseReport.dropDown}"
-                    )
-
-                    DropDown(
-                        dropDown = purchaseReport.dropDown,
-                        error = purchaseReport.dropDownError,
-                        label = stringResource(R.string.select_vendor),
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                stickyHeader {
+                    // datefilter, customer selection
+                    FilterHeader(
+                        fromDate = purchaseReport.fromDate,
+                        toDate = purchaseReport.toDate,
+                        error = purchaseReport.DateError,
+                        onFromDateSelected = { viewModel.setFromDate(it) },
+                        onToDateSelected = { viewModel.setToDate(it) },
+                        dropDown = filteredVendors,
+                        dropDownLabel = stringResource(R.string.select_vendor),
+                        dropDownError = purchaseReport.dropDownError,
+                        searchQuery = purchaseReport.searchQuery,
                         selected = purchaseReport.selected,
-                        labelExtractor = {it.name},
-                        onSelected = { viewModel.updateSelected(it) }
-                    )
-
-                    Button(
-                        onClick = {
-                            Log.d(
-                                "PurchaseReportScreen",
-                                "Apply Filter clicked with fromDate: ${purchaseReport.fromDate}, toDate: ${purchaseReport.toDate}, selected customer: ${purchaseReport.selected}"
-                            )
-                            // Trigger filter action in ViewModel
-                            viewModel.fetchPurchaseRegister(
-                                dateFrom = purchaseReport.fromDate,
-                                dateTo = purchaseReport.toDate,
-                                vendorId = purchaseReport.selected?.id
-                            )
-
+                        onSelected = { viewModel.updateSelected(it) },
+                        onFetchClick = { dateFrom, dateTo, customerId ->
+                            viewModel.fetchPurchaseRegister(dateFrom, dateTo, customerId)
                         },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
-                        shape = RoundedCornerShape(10.dp),
-                        enabled = !purchaseReport.isLoading
-                    ) {
-                        if (purchaseReport.isLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(22.dp),
-                                strokeWidth = 2.dp,
-                                color = Color.White
-                            )
-                        } else {
-                            Text("Apply Filter", color = Color.White)
-                        }
+                        onSearchChange = { viewModel.updateSearchQuery(it) },
+                        isLoading = purchaseReport.isLoading
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                if(purchaseReport.snackbarMessage != null){
+                    item {
+                        DropDownErrorCard(purchaseReport.snackbarMessage!!)
                     }
                 }
-                //             display purchase report data here based on purchaseReport state
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(top = 16.dp)
-                ){
-                    if (purchaseReport.report.isEmpty()) {
 
-                        item {
-                            NoDataCard(message = stringResource(R.string.no_sales_data))
-                        }
-                    } else {
+                if ( purchaseReport.reportFetched && purchaseReport.report.isEmpty()) {
 
-                        items(purchaseReport.report) { reportItem ->
-                            ReportCard(
-                                item = reportItem,
-                                title = { it.invoiceNumber },
-                                subtitle = { it.businessName },
-                                status = { it.invoiceStatus },
-                                dateValue = { it.saleDate },
-                                amountValue = { "₹${it.totalAmount}" },
-                                bottomItems = {
-                                    listOf(
-                                        stringResource(R.string.sub_total) to "₹${it.subTotal}",
-                                        stringResource(R.string.discount) to "₹${it.discountBeforeTax}",
-                                        stringResource(R.string.tax) to "₹${it.tax}"
-                                    )
-                                }
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
+                    item {
+                        NoDataCard(message = stringResource(R.string.no_sales_data))
+                    }
+                } else {
+                    items(purchaseReport.report) { reportItem ->
+                        ReportCard(
+                            item = reportItem,
+                            title = { it.invoiceNumber },
+                            subtitle = { it.businessName },
+                            status = { it.invoiceStatus },
+                            dateValue = { it.saleDate },
+                            amountValue = { "₹${it.totalAmount}" },
+                            bottomItems = {
+                                listOf(
+                                    stringResource(R.string.sub_total) to "₹${it.subTotal}",
+                                    stringResource(R.string.discount) to "₹${it.discountBeforeTax}",
+                                    stringResource(R.string.tax) to "₹${it.tax}"
+                                )
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                        }
                     }
                 }
             }
         }
-
     }
-
-
-
 }
+
+
+
+
+

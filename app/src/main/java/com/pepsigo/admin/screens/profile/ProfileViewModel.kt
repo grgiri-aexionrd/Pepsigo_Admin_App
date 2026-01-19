@@ -11,6 +11,9 @@ import com.pepsigo.admin.AdminAppApplication
 import com.pepsigo.admin.model.ProfileUpdateRequest
 import com.pepsigo.admin.repository.ProfileRepository
 import com.pepsigo.admin.utils.AppError
+import com.pepsigo.admin.utils.safeString
+import com.pepsigo.admin.utils.toApiNullable
+import com.pepsigo.admin.utils.toDoubleApiNullable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -19,7 +22,12 @@ import kotlinx.coroutines.launch
 sealed class ProfileUiState{
     object Loading : ProfileUiState()
     data class Loaded(val profile: UserProfileUiModel) : ProfileUiState()
-    data class EditEmail(val email: String) : ProfileUiState()
+    data class EditEmail(
+        val email: String,
+        val error: String? = null,
+        val isError: Boolean = false
+    ) : ProfileUiState()
+
     data class EditProfile(val profile: UserProfileUiModel) : ProfileUiState()
     data class Success(val message: String) : ProfileUiState()
     data class Error(val error: AppError) : ProfileUiState()
@@ -57,17 +65,16 @@ class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() 
             result
                 .onSuccess { profile ->
                     val userProfile =  UserProfileUiModel(
-                        businessName = profile.business,
+                        businessName = profile.business!!,
                         name = profile.name ,
                         mobile = profile.mobile ,
                         email = profile.email ,
-                        address1 = profile.address1,
-                        address2 = profile.address2,
-                        state = profile.state,
-                        pincode = profile.pincode,
-                        latitude = profile.latitude.toString(),
-                        longitude = profile.longitude.toString()
-
+                        address1 = profile.address1!!,
+                        address2 = profile.address2!!,
+                        state = profile.state!!,
+                        pincode = profile.pincode!!,
+                        latitude = profile.latitude.safeString(),
+                        longitude = profile.longitude.safeString()
                     )
                     _uiState.value = ProfileUiState.Loaded(userProfile)
                 }
@@ -83,6 +90,14 @@ class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() 
 
     // Example update functions
     fun updateEmail(newEmail: String, password: String) {
+        if (newEmail.isBlank() || password.isBlank() ) {
+            _uiState.value = ProfileUiState.EditEmail(
+                email = newEmail,
+                error = "Email & Password cannot be empty",
+                isError = true
+            )
+            return
+        }
 
         viewModelScope.launch {
             val result = repository.updateEmail(newEmail, password)
@@ -105,20 +120,31 @@ class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() 
             _uiState.value = ProfileUiState.EditProfile(currentProfile)
     }
 
+    fun updateProfileCoordinates(lat: Double, lng: Double) {
+        val current = _uiState.value as? ProfileUiState.EditProfile ?: return
+
+        val updatedProfile = current.profile.copy(
+            latitude = lat.toString(),
+            longitude = lng.toString()
+        )
+
+        _uiState.value = current.copy(profile = updatedProfile)
+    }
+
     fun updateProfile(updatedProfile: UserProfileUiModel) {
         viewModelScope.launch {
             Log.d("ProfileViewModel", "Updating profile with: $updatedProfile")
             val result = repository.updateProfile(
                 ProfileUpdateRequest(
-                business = updatedProfile.businessName,
+                business = updatedProfile.businessName.toApiNullable(),
                 name = updatedProfile.name,
                 mobile = updatedProfile.mobile,
-                address1 = updatedProfile.address1,
-                address2 = updatedProfile.address2,
-                state = updatedProfile.state,
-                pincode = updatedProfile.pincode,
-                latitude = updatedProfile.latitude.toDoubleOrNull() ?: 0.0,
-                longitude = updatedProfile.longitude.toDoubleOrNull() ?: 0.0
+                address1 = updatedProfile.address1.toApiNullable(),
+                address2 = updatedProfile.address2.toApiNullable(),
+                state = updatedProfile.state.toApiNullable(),
+                pincode = updatedProfile.pincode.toApiNullable(),
+                latitude = updatedProfile.latitude.toDoubleApiNullable(),
+                longitude = updatedProfile.longitude.toDoubleApiNullable()
             )
             )
             Log.d("ProfileViewModel", "Profile update result: $result")
@@ -146,7 +172,12 @@ class ProfileViewModel(private val repository: ProfileRepository) : ViewModel() 
             Log.d("ProfileViewModel", "Password update result: $result")
             result.onSuccess { response ->
                 _uiState.value = ProfileUiState.Success(response.message)
+                getProfile()
             }
+                .onFailure { error ->
+                    _uiState.value = ProfileUiState.Error(error as AppError)
+                    getProfile()
+                }
 
         }
     }

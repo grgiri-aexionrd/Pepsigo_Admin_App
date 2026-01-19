@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.google.android.gms.maps.model.LatLng
 import com.pepsigo.admin.AdminAppApplication
 import com.pepsigo.admin.mapper.toInventoryUi
 import com.pepsigo.admin.mapper.toMapUi
@@ -45,6 +46,8 @@ class LogoutViewModel(
     private val _logoutSuccess = MutableSharedFlow<Boolean>()
     val logoutSuccess = _logoutSuccess.asSharedFlow()
 
+    private val previousDeliveryLocations = mutableMapOf<Int, LatLng>()
+
     init {
         getDashboardData()
         Log.d("logoutViewModel","init called")
@@ -71,7 +74,7 @@ class LogoutViewModel(
                         _metricsState.value = newMetrics
                     }
 
-                    val newMapState = domain.users.toMapUi() // returns MapSectionState.Loaded
+                    val newMapState = domain.users.toMapUi(previousDeliveryLocations) // returns MapSectionState.Loaded
                     Log.d(
                         "MAP_EQ",
                         "equal=${_mapState.value == newMapState}"

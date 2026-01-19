@@ -111,24 +111,26 @@ fun PurchaseDetails(
                 ) {
                     Spacer(modifier = Modifier.width(8.dp))
                     if(purchase.purchase.invoiceStatus != "Cancelled") {
-                        OutlinedButton(
-                            onClick = { onCancelClick(purchase.purchase.purchaseId) },
-                            enabled = !purchase.hasSales,
-                            border = BorderStroke(
-                                2.dp,
-                                if (!purchase.hasSales) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
-                            ),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = MaterialTheme.colorScheme.primary,
-                                disabledContentColor = MaterialTheme.colorScheme.secondary
-                            ),
+                        if(!purchase.hasSales) {
+                            OutlinedButton(
+                                onClick = { onCancelClick(purchase.purchase.purchaseId) },
+                                enabled = !purchase.hasSales,
+                                border = BorderStroke(
+                                    2.dp,
+                                    if (!purchase.hasSales) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
+                                ),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.primary,
+                                    disabledContentColor = MaterialTheme.colorScheme.secondary
+                                ),
 //                        modifier = Modifier.wrapContentSize()
-                            modifier = Modifier
-                                .height(56.dp)
-                                .width(112.dp)
-                        ) {
-                            if (isLoading) CircularProgressIndicator() else Text("Cancel Purchase")
+                                modifier = Modifier
+                                    .height(56.dp)
+                                    .width(112.dp)
+                            ) {
+                                if (isLoading) CircularProgressIndicator() else Text("Cancel Purchase")
 
+                            }
                         }
                     }
 

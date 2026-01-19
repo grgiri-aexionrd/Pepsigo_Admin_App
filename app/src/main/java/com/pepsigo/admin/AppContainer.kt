@@ -5,12 +5,16 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.pepsigo.admin.network.ApiService
 import android.content.Context
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.pepsigo.admin.domainLayer.DeliveryExecutiveUseCase
 import com.pepsigo.admin.repository.LocationRepositoryImpl
 import com.pepsigo.admin.data.TokenProvider
 import com.pepsigo.admin.data.UserPreferenceRepository
 import com.pepsigo.admin.domainLayer.BatchStockUseCase
+import com.pepsigo.admin.domainLayer.CreatePromotionsUseCase
 import com.pepsigo.admin.domainLayer.CreatePurchaseUseCase
+import com.pepsigo.admin.domainLayer.OutstandingDuesUseCase
 import com.pepsigo.admin.domainLayer.PromotionalOfferUseCase
 import com.pepsigo.admin.domainLayer.RouteUseCase
 import com.pepsigo.admin.domainLayer.SalesPurchaseReportUseCase
@@ -19,6 +23,8 @@ import com.pepsigo.admin.network.TokenInterceptor
 import com.pepsigo.admin.repository.AuthRepository
 import com.pepsigo.admin.repository.BatchStockRepo
 import com.pepsigo.admin.repository.BatchStockRepoImpl
+import com.pepsigo.admin.repository.DailyCollectionRepo
+import com.pepsigo.admin.repository.DailyCollectionRepoImpl
 import com.pepsigo.admin.repository.DashboardRepo
 import com.pepsigo.admin.repository.DashboardRepoImpl
 import com.pepsigo.admin.repository.DeliveryExecutiveStatusRepo
@@ -41,11 +47,18 @@ import com.pepsigo.admin.repository.UserRepositoryImpl
 import com.pepsigo.admin.repository.PurchaseRepo
 import com.pepsigo.admin.repository.PurchaseRepoImpl
 import com.pepsigo.admin.repository.RouteRepoImpl
+import com.pepsigo.admin.repository.SalesRepo
+import com.pepsigo.admin.repository.SalesRepoImpl
 import com.pepsigo.admin.repository.StockSummaryRepo
 import com.pepsigo.admin.repository.StockSummaryRepoImpl
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 import kotlin.getValue
 
 
@@ -53,31 +66,46 @@ import kotlin.getValue
 private const val TOKEN_PREFERENCE_NAME = "user_preferences"
  val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = TOKEN_PREFERENCE_NAME)
 open class AppContainer(context: Context) {
+
+    // ✅ Application-wide coroutine scope
+    val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     var userPreferenceRepository: UserPreferenceRepository = UserPreferenceRepository(context.dataStore)
 
     val tokenProvider: TokenProvider by lazy {
-        TokenProvider(userPreferenceRepository)
+        TokenProvider(userPreferenceRepository,appScope)
     }
     private val tokenInterceptor: TokenInterceptor by lazy {
         TokenInterceptor(tokenProvider)
     }
     private val authInterceptor: AuthInterceptor by lazy {
-        AuthInterceptor()
+        AuthInterceptor(tokenProvider)
     }
 
+
+    val loggingInterceptor = HttpLoggingInterceptor().apply {
+        level = HttpLoggingInterceptor.Level.BODY
+    }
 
     val okHttpClient: OkHttpClient by lazy {
         OkHttpClient.Builder()
             .addInterceptor(tokenInterceptor)
             .addInterceptor(authInterceptor)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .addInterceptor(loggingInterceptor)
             .build()
     }
+
+    val gson: Gson = GsonBuilder()
+        .serializeNulls()
+        .create()
 
     val retrofit: Retrofit by lazy {
         Retrofit.Builder()
             .baseUrl("https://pepsigo.app/api/")
             .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }
 
@@ -141,8 +169,8 @@ open class AppContainer(context: Context) {
         OutstandingDuesRepoImpl(apiService)
     }
 
-    val duesUseCase: com.pepsigo.admin.domainLayer.OutstandingDuesUseCase by lazy {
-        com.pepsigo.admin.domainLayer.OutstandingDuesUseCase(userRepository, duesRepo)
+    val duesUseCase: OutstandingDuesUseCase by lazy {
+        OutstandingDuesUseCase(userRepository, duesRepo)
     }
 
     open val inventoryRepo : InventoryRepo by lazy {
@@ -151,6 +179,10 @@ open class AppContainer(context: Context) {
 
     open val purchaseRepo : PurchaseRepo by lazy {
         PurchaseRepoImpl(apiService)
+    }
+
+    val salesRepo: SalesRepo by lazy {
+        SalesRepoImpl(apiService)
     }
 
     open val promoOfferRepo : PromotionalOfferRepo by lazy {
@@ -174,6 +206,10 @@ open class AppContainer(context: Context) {
         )
     }
 
+    open val createPromotionsUseCase: CreatePromotionsUseCase by lazy {
+            CreatePromotionsUseCase(inventoryRepo, userRepository,promoOfferRepo)
+    }
+
     val stockSummaryRepo : StockSummaryRepo by lazy {
         StockSummaryRepoImpl(apiService)
     }
@@ -193,7 +229,7 @@ open class AppContainer(context: Context) {
         LedgerRepoImpl(apiService)
     }
 
-    open val dailyCollectionRepo: com.pepsigo.admin.repository.DailyCollectionRepo by lazy {
-        com.pepsigo.admin.repository.DailyCollectionRepoImpl(apiService)
+    open val dailyCollectionRepo: DailyCollectionRepo by lazy {
+        DailyCollectionRepoImpl(apiService)
     }
  }

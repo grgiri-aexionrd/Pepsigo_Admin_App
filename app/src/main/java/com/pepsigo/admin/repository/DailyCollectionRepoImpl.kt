@@ -3,6 +3,7 @@ package com.pepsigo.admin.repository
 import android.util.Log
 import com.pepsigo.admin.model.DailyCollectionResponse
 import com.pepsigo.admin.model.DeliveryPerformanceResponse
+import com.pepsigo.admin.model.ItemWiseSalesResponse
 import com.pepsigo.admin.model.PaymentSummaryResponse
 import com.pepsigo.admin.network.ApiService
 import com.pepsigo.admin.utils.wrapError
@@ -30,6 +31,17 @@ class DailyCollectionRepoImpl(private val apiService: ApiService): DailyCollecti
         return wrapError {
             val response = apiService.deliveryPerformance(from, to)
             Log.d("Delivery Performance", "getDeliveryPerformance: $response")
+            response
+        }
+    }
+
+    override suspend fun getItemWiseSales(
+        from: String,
+        to: String
+    ): Result<ItemWiseSalesResponse> {
+        return wrapError{
+            val response = apiService.itemWiseSales(from, to)
+            Log.d("Item Wise Sales", "getItemWiseSales: $response")
             response
         }
     }

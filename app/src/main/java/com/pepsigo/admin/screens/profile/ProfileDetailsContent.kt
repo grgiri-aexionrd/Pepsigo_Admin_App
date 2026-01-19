@@ -135,19 +135,19 @@ fun ProfileDetailsContent(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
-                ProfileItem(
-                    icon = Icons.Default.Map,
-                    label = "Latitude",
-                    value = profile.latitude
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-
-                ProfileItem(
-                    icon = Icons.Default.Map,
-                    label = "Longitude",
-                    value = profile.longitude
-                )
-                Spacer(modifier = Modifier.height(20.dp))
+//                ProfileItem(
+//                    icon = Icons.Default.Map,
+//                    label = "Latitude",
+//                    value = profile.latitude
+//                )
+//                Spacer(modifier = Modifier.height(16.dp))
+//
+//                ProfileItem(
+//                    icon = Icons.Default.Map,
+//                    label = "Longitude",
+//                    value = profile.longitude
+//                )
+//                Spacer(modifier = Modifier.height(20.dp))
 
             }
         }

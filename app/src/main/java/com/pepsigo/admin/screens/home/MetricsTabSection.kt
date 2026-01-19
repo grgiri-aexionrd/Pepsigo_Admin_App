@@ -95,9 +95,9 @@ fun MetricCard(item: MetricCardState.Loaded) {
         modifier = Modifier
             .width(144.dp)
             .height(120.dp),
-//        colors = CardDefaults.cardColors(
+        colors = CardDefaults.cardColors(
 //            containerColor = item.color.copy(alpha = 0.15f)
-//        ),
+        ),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {

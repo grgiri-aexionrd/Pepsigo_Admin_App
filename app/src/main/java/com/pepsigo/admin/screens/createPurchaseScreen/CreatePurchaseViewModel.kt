@@ -26,7 +26,7 @@ data class CreatePurchaseUi(
     val inventoryError: String? = null,
     val addItemErrors: AddItemErrors = AddItemErrors(),
     val submitErrors: SubmitError = SubmitError(),
-
+    val isRefreshing: Boolean = false,
     val isEditing: Boolean = false,
     val editIndex: Int? = null,
     val snackbarMessage: String? = null,
@@ -83,7 +83,8 @@ class CreatePurchaseViewModel(
                     vendorDropDown = result.vendors,
                     inventoryItem = result.inventory,
                     vendorError = result.vendorError?.userFriendlyMessage,
-                    inventoryError = result.inventoryError?.userFriendlyMessage
+                    inventoryError = result.inventoryError?.userFriendlyMessage,
+                    isRefreshing = false
                 )
             }
         }
@@ -259,6 +260,11 @@ class CreatePurchaseViewModel(
                 }
             }
         }
+    }
+
+    fun refresh(){
+        _uiState.value = _uiState.value.copy(isRefreshing = true)
+        fetchVendorInventoryDetails()
     }
 
     fun clearSnackbarMessage() {

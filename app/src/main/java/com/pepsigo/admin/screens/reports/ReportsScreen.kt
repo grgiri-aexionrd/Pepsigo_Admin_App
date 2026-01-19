@@ -75,21 +75,7 @@ import com.pepsigo.admin.model.PaymentSummaryResponse
 import com.pepsigo.admin.ui.theme.inversePrimaryLight
 import kotlin.text.ifEmpty
 
-// Preview helpers (create outside composable to avoid constructing a ViewModel inside a composable)
-//private val previewFakeRepo = object : com.pepsigo.admin.repository.DailyCollectionRepo {
-//    override suspend fun getDailyCollection(date: String): Result<DailyCollectionResponse> {
-//        val sample = DailyCollectionResponse(
-//            date = "2026-01-06",
-//            data = listOf(ExecutiveCollection(executiveId = 13, executiveName = "lufy3", totalCollected = "1590.00"))
-//        )
-//        return Result.success(sample)
-//    }
-//
-//    // Implement the other abstract method from the repository interface so the anonymous object compiles.
-//    override suspend fun getPaymentSummary(from: String, to: String): Result<PaymentSummaryResponse> {
-//        return Result.failure(Exception("Not implemented in preview"))
-//    }
-//}
+
 
 //private val previewVm = DailyCollectionViewModel(previewFakeRepo)
 
@@ -117,7 +103,8 @@ fun ReportsScreen(
                 desc = stringResource(R.string.reports_summary),
                 onBackClick = { onNavigateBack() }
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.inverseOnSurface
     ) { innerPadding ->
         PullToRefreshBox(
             state = refreshState,
@@ -133,7 +120,6 @@ fun ReportsScreen(
 
             LazyColumn(
                 modifier = Modifier
-                        .background(color = inversePrimaryLight.copy(alpha = 0.35f) )
                     .fillMaxSize()
                     .padding(innerPadding)
                     .padding(16.dp)
@@ -166,9 +152,7 @@ fun ReportsScreen(
 
                 // Table rows
                 itemsIndexed(list) { idx, exec ->
-
                     DailyCollectionRow(exec)
-
                     if (idx < list.size - 1) {
                         HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp))
                     }
@@ -193,7 +177,10 @@ fun ReportsScreen(
                 }
 
                 if (dailyState.isError) {
-                    item { Text(text = dailyState.snackbarMessage ?: "Error", modifier = Modifier.padding(12.dp)) }
+                    item {
+//                        Text(text = dailyState.snackbarMessage ?: "Error", modifier = Modifier.padding(12.dp))
+                        DropDownErrorCard(dailyState.snackbarMessage ?: "Error")
+                    }
                 }
             }
 
@@ -389,13 +376,4 @@ fun DailyCollectionRow(exec: ExecutiveCollection) {
     }
 }
 
-//@RequiresApi(Build.VERSION_CODES.Q)
-//@Preview(showBackground = true)
-//@Composable
-//fun ReportsScreenPreview() {
-//    ReportsScreen(
-//        onNavigateBack = {},
-//        onNavigate = {},
-//        viewModel = previewVm
-//    )
-//}
+

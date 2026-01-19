@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import com.google.firebase.messaging.FirebaseMessaging
 import com.pepsigo.admin.AdminAppApplication
 import com.pepsigo.admin.repository.AuthRepository
+import com.pepsigo.admin.utils.AppError
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,13 +39,15 @@ class LoginViewModel(private val repository: AuthRepository) : ViewModel() {
             _uiState.value = LoginUiState.Error("Email and password must not be empty")
             return
         }
-
         viewModelScope.launch {
-            try {
-                Log.d("LSAttemptLogin"," Attempting login for $email")
-                val result = repository.login(email, password)
-                Log.d("LSLoginViewModel", "Login result: $result")
-                if (result.isSuccess) {
+            Log.d("LSAttemptLogin", "Attempting login for $email")
+
+            val result = repository.login(email.trim(), password.trim())
+
+            Log.d("LSLoginViewModel", "Login result: $result")
+
+            result
+                .onSuccess {
                     // 1️⃣ Fetch FCM token after login
                     val fcmToken = FirebaseMessaging.getInstance().token.await()
                     Log.d("FCM", "Fetched token at login: $fcmToken")
@@ -53,19 +56,20 @@ class LoginViewModel(private val repository: AuthRepository) : ViewModel() {
                     val tokenResult = repository.updateFcmToken(fcmToken)
                     Log.d("LoginVM", "FCM token update result: $tokenResult")
 
-                    // 3️⃣ Optional: if backend fails, still continue login
+                    // 3️⃣ Optional: backend failure should not block login
                     if (tokenResult.isFailure) {
                         Log.e("LoginVM", "Failed to update token on backend")
                     }
 
-                    _uiState.value = LoginUiState.Success // could be token or userId
-                } else {
-                    _uiState.value = LoginUiState.Error("Invalid credentials")
+                    _uiState.value = LoginUiState.Success
                 }
-            } catch (e: Exception) {
-                _uiState.value = LoginUiState.Error(e.message ?: "Something went wrong")
-            }
+                .onFailure { error ->
+                    val appError = error as? AppError
 
+                    _uiState.value = LoginUiState.Error(
+                        appError?.userFriendlyMessage ?: "Something went wrong"
+                    )
+                }
         }
     }
 

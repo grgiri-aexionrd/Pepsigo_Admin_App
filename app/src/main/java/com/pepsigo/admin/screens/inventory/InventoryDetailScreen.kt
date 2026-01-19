@@ -148,7 +148,7 @@ fun StatusChip(
             .background(bg, RoundedCornerShape(12.dp))
             .padding(horizontal = 12.dp, vertical = 4.dp)
     ){
-        Text(text = status, style = MaterialTheme.typography.bodyMedium)
+        Text(text = status, style = MaterialTheme.typography.labelSmall)
     }
 
 
@@ -212,7 +212,8 @@ fun StockSummaryCard(
                     Text("Total Available: ${stockSummary?.totalAvailable}")
                     Text("Active Batches: ${stockSummary?.batchesCount}")
             }
-            Text("Nearest Expiry: ${formatExpiryDate(stockSummary?.nearestExpiry)}")
+//            Text("Nearest Expiry: ${formatExpiryDate(stockSummary?.nearestExpiry)}")
+            Text("Nearest Expiry: ${stockSummary?.nearestExpiry}")
         }
 
     }
@@ -246,7 +247,8 @@ fun BatchCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ){
                 Text("Batch #${batch.id}", style = MaterialTheme.typography.titleMedium)
-                Text("Expiry: ${formatExpiryDate(batch.expiryDate)}")
+//                Text("Expiry: ${formatExpiryDate(batch.expiryDate)}")
+                Text("Expiry: ${batch.expiryDate}")
                 Icon(
                     Icons.Filled.ArrowDropDown,
                     contentDescription = "Show Batch Details",

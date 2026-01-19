@@ -29,10 +29,13 @@ class UserRepositoryImpl(private val apiService: ApiService) : UserRepository {
     }
 
 
-    override suspend fun addCustomer(form: AddUserRequest): Result<User> {
+    override suspend fun addCustomer(form: AddUserRequest): Result<UserSuccessResponse<User>> {
         return wrapError {
             val response = apiService.addCustomer(form)
-            response.user.toDomain()
+            UserSuccessResponse(
+                message = response.message,
+                data = response.user.toDomain()
+            )
         }
 
     }
@@ -53,7 +56,9 @@ class UserRepositoryImpl(private val apiService: ApiService) : UserRepository {
 
     override suspend fun updateUser(form: EditUserRequest): Result<UserSuccessResponse<User>> {
         return wrapError {
+            Log.d("UserRepositoryImpl", "Updating user with form: $form")
             val response = apiService.updateUser(form.id, form.userDetail)
+            Log.d("UserRepositoryImpl", "Received response: $response")
             UserSuccessResponse(
                 message = response.message,
                 data = response.user.toDomain()

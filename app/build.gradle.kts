@@ -108,6 +108,8 @@ dependencies {
 
 //    okhttp
     implementation(libs.okhttp)
+    // logging interceptor
+    implementation("com.squareup.okhttp3:logging-interceptor:5.1.0")
 
 //    Kotlinx serialization
     implementation(libs.kotlinx.serialization.json)

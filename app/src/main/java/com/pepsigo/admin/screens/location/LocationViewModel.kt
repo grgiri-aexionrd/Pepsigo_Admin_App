@@ -46,7 +46,7 @@ class LocationViewModel(private val repository: LocationRepository): ViewModel()
             when (val result = repository.getLocations()) {
                 is LocationResult.Success -> _uiState.update {
                     Log.d("LocationViewModel", "Locations fetched successfully: ${result.data}")
-                    it.copy(isLoading = false, locations = result.data, isRefreshing = false)
+                    it.copy(isLoading = false, locations = result.data, errorMessage = null, isRefreshing = false)
                 }
                 is LocationResult.Error -> _uiState.update {
                     Log.d("LocationViewModel", "Error fetching locations: ${result.message}")

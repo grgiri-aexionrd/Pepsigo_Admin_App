@@ -46,7 +46,7 @@ class DailyCollectionViewModel(private val dailyCollectionRepo: DailyCollectionR
         viewModelScope.launch {
             val result = dailyCollectionRepo.getDailyCollection(date)
             result.onSuccess { resp ->
-                _uiState.value = _uiState.value.copy(isLoading = false, data = resp)
+                _uiState.value = _uiState.value.copy(isLoading = false, data = resp, isError = false)
             }
             result.onFailure { err ->
                 _uiState.value = _uiState.value.copy(isLoading = false, isError = true, snackbarMessage = (err as AppError).userFriendlyMessage)

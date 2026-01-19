@@ -88,7 +88,8 @@ fun StockSummaryScreen(
                 )
 
             }
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.inverseOnSurface
     ) { innerPadding ->
         PullToRefreshBox(
             isRefreshing = stockSummary.isRefreshing,

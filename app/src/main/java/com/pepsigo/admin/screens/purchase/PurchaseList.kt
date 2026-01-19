@@ -11,12 +11,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -31,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import com.pepsigo.admin.model.PurchaseUiModel
+import com.pepsigo.admin.utils.toAppError
 
 @Composable
 fun PurchaseList(
@@ -75,9 +78,10 @@ fun PurchaseList(
                 }
             }
             is LoadState.Error -> {
+                val appError = state.error.toAppError()
                 item {
                     LoadMoreRetry(
-                        message = state.error.message ?: "Something went wrong",
+                        message = appError.userFriendlyMessage,
                         onRetry = { purchases.retry() }
                     )
                 }
@@ -102,7 +106,6 @@ fun PurchaseCard(item: PurchaseUiModel, modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp),
-//            .clickable { expanded = !expanded },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -114,52 +117,63 @@ fun PurchaseCard(item: PurchaseUiModel, modifier: Modifier = Modifier) {
             // Top row: Invoice + Date
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Invoice#: ${item.invoiceNumber}", fontWeight = FontWeight.SemiBold)
-                Text(item.purchaseDate, color = Color.Gray, fontSize = 13.sp)
+                Column(
+                    modifier = Modifier.wrapContentSize(),
+                ) {
+                    Text(item.vendor.businessName,fontWeight = FontWeight.SemiBold)
+                    Text(item.invoiceNumber,color = Color.Gray,style = MaterialTheme.typography.labelLarge )
+
+                }
+                Column(
+                    modifier = Modifier.wrapContentSize(),
+                    horizontalAlignment = Alignment.End
+                ){
+                    PurchaseStatusChip(status = item.invoiceStatus)
+                    Text(item.purchaseDate, color = Color.Gray, fontSize = 13.sp)
+                }
             }
 
-            Spacer(Modifier.height(6.dp))
-
-            // Vendor + Status
+            Spacer(Modifier.height(8.dp))
+            HorizontalDivider()
+            Spacer(Modifier.height(8.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("Vendor: ${item.vendor.businessName}")
-                PurchaseStatusChip(status = item.invoiceStatus)
+            ){
+                InfoRow(label = "Subtotal", value = item.subTotal)
+                InfoRow(label = "Tax Amount", value = item.taxAmount)
+                InfoRow(label = "Total", value = item.totalAmount)
             }
-
-            Divider(Modifier.padding(vertical = 10.dp))
 
             // Amount Summary
-            Column {
-                InfoRow(label = "Subtotal", value = item.subTotal)
-                InfoRow(label = "Discount (BT)", value = item.discountBt)
-                InfoRow(label = "Discount (AT)", value = item.discountAt)
-                InfoRow(label = "Tax Amount", value = item.taxAmount)
-            }
-
-            Divider(Modifier.padding(vertical = 10.dp))
-
-            // Total Payable
-            Text(
-                "TOTAL PAYABLE: ${item.totalAmount}",
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-                color = MaterialTheme.colorScheme.primary
-            )
+//            Column {
+//                InfoRow(label = "Subtotal", value = item.subTotal)
+//                InfoRow(label = "Discount (BT)", value = item.discountBt)
+//                InfoRow(label = "Discount (AT)", value = item.discountAt)
+//                InfoRow(label = "Tax Amount", value = item.taxAmount)
+//            }
+//
+//            Divider(Modifier.padding(vertical = 10.dp))
+//
+//            // Total Payable
+//            Text(
+//                "TOTAL PAYABLE: ${item.totalAmount}",
+//                fontWeight = FontWeight.Bold,
+//                fontSize = 16.sp,
+//                color = MaterialTheme.colorScheme.primary
+//            )
         }
     }
 }
 
 @Composable
 fun InfoRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
+    Column(
+        modifier = Modifier.wrapContentSize(),
     ) {
         Text(label, color = Color.Gray)
         Text(value, fontWeight = FontWeight.Medium)

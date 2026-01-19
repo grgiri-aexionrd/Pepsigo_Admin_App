@@ -26,12 +26,14 @@ import com.pepsigo.admin.model.UserForm
 import com.pepsigo.admin.screens.customer.FormTextField
 import com.pepsigo.admin.screens.customer.LocationDropdown
 import com.pepsigo.admin.screens.location.Location
+import com.pepsigo.admin.screens.reports.DropDownErrorCard
 import kotlin.reflect.KProperty1
 
 @Composable
 fun UserFormScreen(
     form: UserForm,
     locations: List<Location>,
+    locationError: String?,
     isEdit: Boolean,
     isVendor: Boolean,
     showLocationDropdown: Boolean,
@@ -115,11 +117,15 @@ fun UserFormScreen(
 
         // Location Dropdown
         if (showLocationDropdown) {
-            LocationDropdown(
-                selectedName = locations.find { it.id == form.locationId }?.name ?: "",
-                onLocationSelected = { location -> onLocationChange(location.id) },
-                locations = locations
-            )
+            if (locationError == null) {
+                LocationDropdown(
+                    selectedName = locations.find { it.id == form.locationId }?.name ?: "",
+                    onLocationSelected = { location -> onLocationChange(location.id) },
+                    locations = locations
+                )
+            }else{
+                DropDownErrorCard(locationError)
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))

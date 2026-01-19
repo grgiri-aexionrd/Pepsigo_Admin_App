@@ -1,5 +1,6 @@
 package com.pepsigo.admin.domainLayer
 
+import android.util.Log
 import com.pepsigo.admin.model.AddUserRequest
 import com.pepsigo.admin.model.DeliveryExecutiveUiModel
 import com.pepsigo.admin.model.EditUserRequest
@@ -12,6 +13,8 @@ import com.pepsigo.admin.repository.DeliveryExecutiveStatusRepo
 import com.pepsigo.admin.repository.UserRepository
 import com.pepsigo.admin.screens.deliveryExecutive.NewDelForm
 import com.pepsigo.admin.utils.AppError
+import com.pepsigo.admin.utils.toApiNullable
+import com.pepsigo.admin.utils.toDoubleApiNullable
 
 
 class DeliveryExecutiveUseCase (
@@ -69,6 +72,7 @@ class DeliveryExecutiveUseCase (
     }
 
     suspend fun updateDeliveryExecutive(form: UserForm): Result<UserSuccessResponse<User>> {
+        Log.d("DeliveryExecutiveUseCase", "Updating delivery executive : $form")
         return try {
             val request = EditUserRequest(
                 id = requireNotNull(form.id) { "User ID must not be null for update" },
@@ -76,16 +80,17 @@ class DeliveryExecutiveUseCase (
                     name = form.name,
                     email = form.email,
                     mobile = form.mobile,
-                    businessName = form.businessName,
+                    businessName = form.businessName?.toApiNullable(),
                     locationId = form.locationId,
-                    address1 = form.address1,
-                    address2 = form.address2,
-                    state = form.state,
-                    pincode = form.pincode,
-                    latitude = form.coordinates.split(",")[0].toDoubleOrNull(),
-                    longitude = form.coordinates.split(",")[1].toDoubleOrNull(),
+                    address1 = form.address1.toApiNullable(),
+                    address2 = form.address2.toApiNullable(),
+                    state = form.state.toApiNullable(),
+                    pincode = form.pincode.toApiNullable(),
+                    latitude = form.coordinates.split(",")[0].toDoubleApiNullable(),
+                    longitude = form.coordinates.split(",")[1].toDoubleApiNullable(),
                 )
             )
+            Log.d("DeliveryExecutiveUseCase", "Request: $request")
             val response = userRepository.updateUser(request)
              response
         }  catch (e: IllegalArgumentException) {

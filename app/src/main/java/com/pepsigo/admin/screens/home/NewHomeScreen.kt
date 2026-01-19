@@ -213,7 +213,7 @@ fun NewHomeScreen(
 
                 )
             },
-            containerColor = inversePrimaryLight.copy(alpha = 0.35f),
+            containerColor = MaterialTheme.colorScheme.inverseOnSurface
         ){ innerPadding ->
             // 🔥 Pull to Refresh MUST wrap ONLY the content, not the drawer or scaffold
             PullToRefreshBox(

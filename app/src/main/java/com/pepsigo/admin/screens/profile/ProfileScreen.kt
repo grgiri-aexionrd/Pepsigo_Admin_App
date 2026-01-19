@@ -52,7 +52,8 @@ import com.pepsigo.admin.utils.AppError
 fun ProfileScreen(
     viewModel: ProfileViewModel,
     onBackToProfileScreen: () -> Unit,
-    onNavigateBackToHome: () -> Unit
+    onNavigateBackToHome: () -> Unit,
+    onLocationUpdate: () -> Unit
 ) {
     val profile by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -122,6 +123,8 @@ fun ProfileScreen(
                 val editEmailState = profile as ProfileUiState.EditEmail
                 EditEmailScreen(
                     currentEmail = editEmailState.email,
+                    isError = editEmailState.isError,
+                    error = editEmailState.error,
                     onDismiss = { viewModel.getProfile() },
                     onEmailUpdated = { newEmail, password->
                         viewModel.updateEmail(newEmail,password)
@@ -141,6 +144,7 @@ fun ProfileScreen(
                     onSave ={ updatedProfile ->
                         viewModel.updateProfile(updatedProfile) },
                     onCancel ={ viewModel.getProfile() },
+                    onLocationUpdate = onLocationUpdate,
                     modifier = Modifier.padding(innerPadding)
                 )
 
@@ -182,6 +186,8 @@ fun ProfileScreen(
 @Composable
 fun EditEmailScreen(
     currentEmail: String,
+    isError: Boolean,
+    error: String?,
     onDismiss: () -> Unit,
     onEmailUpdated: (String, String) -> Unit,
     modifier: Modifier = Modifier
@@ -216,6 +222,7 @@ fun EditEmailScreen(
                     onValueChange = { email = it },
                     label = { Text("New Email") },
                     modifier = Modifier.fillMaxWidth(),
+                    isError = isError,
                     keyboardOptions = KeyboardOptions.Default.copy(
                         imeAction = ImeAction.Next
                     )
@@ -235,12 +242,21 @@ fun EditEmailScreen(
                         }
 
                     },
+                    isError = isError,
                     keyboardOptions = KeyboardOptions.Default.copy(
                         imeAction = ImeAction.Done
                     ),
                     visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth()
                 )
+                if (isError) {
+                    Text(
+                        text = error ?: "",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
+
                 Spacer(modifier = Modifier.padding(16.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -248,16 +264,16 @@ fun EditEmailScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Button(
-                        onClick = { onEmailUpdated(email,password) },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Save")
-                    }
-                    Button(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f)
                     ) {
                         Text("Cancel")
+                    }
+                    Button(
+                        onClick = { onEmailUpdated(email,password) },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Save")
                     }
                 }
             }

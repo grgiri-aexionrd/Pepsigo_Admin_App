@@ -28,11 +28,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.pepsigo.admin.model.User
+import com.pepsigo.admin.screens.reports.DropDownErrorCard
 
 
 @Composable
 fun CustomerListScreen(
     customers: List<User>,
+    message: String?,
     onEditCustomer: (User) -> Unit,
     onToggle: (id: Int) -> Unit,
     modifier: Modifier = Modifier
@@ -54,15 +56,22 @@ fun CustomerListScreen(
                     onQueryChange = { searchQuery = it }
                 )
             }
-            // 📋 List of customers
-            items(filteredCustomers) { customer ->
-                CustomerRow(
-                    customer = customer,
-                    onEditCustomer = onEditCustomer,
-                    onToggle = onToggle ,
-                    onClick = { selectedCustomer = customer }
-                )
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+
+            if(message != null) {
+                item {
+                    DropDownErrorCard(message)
+                }
+            }else {
+                // 📋 List of customers
+                items(filteredCustomers) { customer ->
+                    CustomerRow(
+                        customer = customer,
+                        onEditCustomer = onEditCustomer,
+                        onToggle = onToggle,
+                        onClick = { selectedCustomer = customer }
+                    )
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                }
             }
 
             }

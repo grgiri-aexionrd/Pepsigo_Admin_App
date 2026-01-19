@@ -31,10 +31,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.pepsigo.admin.model.InventoryListUi
 import com.pepsigo.admin.screens.customer.SearchBarSection
+import com.pepsigo.admin.screens.home.MetricCardError
 
 @Composable
 fun InventoryListScreen(
     inventoryItems: List<InventoryListUi>,
+    message: String?,
     onClick: (InventoryListUi) -> Unit,
     onEdit: (InventoryListUi) -> Unit,
     onToggle: (id: Int) -> Unit,
@@ -57,16 +59,22 @@ fun InventoryListScreen(
                     onQueryChange = { searchQuery = it }
                 )
             }
-            // 📋 List of Inventory
-            items(filteredInventory) { inventoryItem ->
-                InventoryRow(
-                    inventoryItem = inventoryItem,
-                    onEdit = onEdit,
-                    onToggle = onToggle,
-                    onClick = onClick
-                )
 
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            if( message != null && inventoryItems.isEmpty() ) {
+                item {
+                    MetricCardError(message)
+                }
+            }else {
+                // 📋 List of Inventory
+                items(filteredInventory) { inventoryItem ->
+                    InventoryRow(
+                        inventoryItem = inventoryItem,
+                        onEdit = onEdit,
+                        onToggle = onToggle,
+                        onClick = onClick
+                    )
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                }
             }
 
         }

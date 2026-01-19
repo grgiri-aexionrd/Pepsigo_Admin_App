@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 class PurchaseRepoImpl(private val apiService: ApiService): PurchaseRepo {
+    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun getPurchases(): Flow<PagingData<PurchaseUiModel>> {
         return Pager(
             config = PagingConfig(

@@ -1,6 +1,8 @@
 package com.pepsigo.admin.repository
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import com.pepsigo.admin.mapper.toDomain
 import com.pepsigo.admin.mapper.toUi
 import com.pepsigo.admin.model.AddInventoryRequest
@@ -20,6 +22,7 @@ class InventoryRepoImpl(private val apiService: ApiService) : InventoryRepo {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun fetchInventoryDetails(id: Int): Result<InventoryResponse<InventoryItemDetailUi>> {
         return wrapError {
             Log.d("InventoryRepoImpl", "Fetching inventory details for ID: $id")

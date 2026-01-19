@@ -24,6 +24,11 @@
     <string name="add_item">Add Item</string>
 
     <string name="promotions">Promotional Offer</string>
+    <string name="create_promotions">Free Products/Special Offers</string>
+    <string name="is_free_product">Free Product</string>
+    <string name="quantity">Quantity   :</string>
+    <string name="sale_price">SalePrice:</string>
+    <string name="add_offer_info">*For Free Product Enter Only Qty</string>
 
 
 
@@ -69,6 +74,9 @@
     <string name="item_wise_sales">Item Sales</string>
     <string name="payment_summary">Payment Summary</string>
     <string name="delivery_performance">Delivery Performance</string>
+    <string name="submit_promotion">Add Offer</string>
+    <string name="quantity_error">*Min Amount Required</string>
+    <string name="sales">Sales</string>
 
 
 </resources>

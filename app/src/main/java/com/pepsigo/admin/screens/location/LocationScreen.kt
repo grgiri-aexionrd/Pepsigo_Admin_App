@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -94,7 +96,7 @@ fun LocationScreen(
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = inversePrimaryLight.copy(alpha = 0.35f)
+        containerColor = MaterialTheme.colorScheme.inverseOnSurface
     ) { innerPadding ->
         PullToRefreshBox(
             isRefreshing = state.isRefreshing,
@@ -118,7 +120,8 @@ fun LocationScreen(
                     }
 
                     state.errorMessage != null -> Box(
-                        modifier = Modifier.align(Alignment.Center),
+                        modifier = Modifier.align(Alignment.Center)
+                            .verticalScroll(rememberScrollState()),
                         contentAlignment = Alignment.Center
                     ) {
                         Column(

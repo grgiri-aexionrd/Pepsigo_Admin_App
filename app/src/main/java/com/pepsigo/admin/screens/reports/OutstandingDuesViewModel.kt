@@ -33,7 +33,9 @@ data class OutstandingDuesUiState(
     val isRefreshing: Boolean = false,
     val isError: Boolean = false,
     val snackbarMessage: String? = null,
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val customerDuesFetched: Boolean = false,
+    val vendorDuesFetched: Boolean = false
 )
 
 class OutstandingDuesViewModel( private val duesUseCase: OutstandingDuesUseCase ): ViewModel() {
@@ -55,12 +57,16 @@ class OutstandingDuesViewModel( private val duesUseCase: OutstandingDuesUseCase 
                 vendors = result.vendors,
                 customerError = result.customerError?.userFriendlyMessage,
                 vendorError = result.vendorError?.userFriendlyMessage,
+                selectedCustomer = null,
+                selectedVendor = null,
                 isRefreshing = false,
-                isLoading = false
+                isLoading = false,
+                isError = false,
+                snackbarMessage = null,
+                customerDuesFetched = false,
+                vendorDuesFetched = false
             )
-
         }
-
     }
 
     fun updateSelectedCustomer(customer: DropDownList?){
@@ -83,7 +89,8 @@ class OutstandingDuesViewModel( private val duesUseCase: OutstandingDuesUseCase 
         if (customerId == null) {
             _uiState.value = current.copy(
                 selectedCustomerError = true,
-                isLoading = false
+                isLoading = false,
+                customerDuesFetched = false
             )
             return
         }
@@ -101,7 +108,9 @@ class OutstandingDuesViewModel( private val duesUseCase: OutstandingDuesUseCase 
                 _uiState.value = current.copy(
                     customerDues = customerDues,
                     selectedCustomerError = false,
-                    isLoading = false
+                    isLoading = false,
+                    customerDuesFetched = true,
+                    snackbarMessage = null
                 )
             }
                 .onFailure { error ->
@@ -109,6 +118,7 @@ class OutstandingDuesViewModel( private val duesUseCase: OutstandingDuesUseCase 
                         isLoading = false,
                         isError = true,
                         snackbarMessage = (error as AppError).userFriendlyMessage,
+                        customerDuesFetched = true
                     )
                 }
         }
@@ -121,7 +131,8 @@ class OutstandingDuesViewModel( private val duesUseCase: OutstandingDuesUseCase 
         if (vendorId == null) {
             _uiState.value = current.copy(
                 selectedVendorError = true,
-                isLoading = false
+                isLoading = false,
+                vendorDuesFetched = false
             )
             return
         }
@@ -137,7 +148,9 @@ class OutstandingDuesViewModel( private val duesUseCase: OutstandingDuesUseCase 
                 _uiState.value = current.copy(
                     vendorDues = vendorDues,
                     selectedVendorError = false,
-                    isLoading = false
+                    isLoading = false,
+                    vendorDuesFetched = true,
+                    snackbarMessage = null
                 )
             }
                 .onFailure { error ->
@@ -145,6 +158,7 @@ class OutstandingDuesViewModel( private val duesUseCase: OutstandingDuesUseCase 
                         isLoading = false,
                         isError = true,
                         snackbarMessage = (error as AppError).userFriendlyMessage,
+                        vendorDuesFetched = true
                     )
                 }
         }
@@ -162,12 +176,6 @@ class OutstandingDuesViewModel( private val duesUseCase: OutstandingDuesUseCase 
 
     }
 
-    fun clearSnackbarMessage() {
-        _uiState.update { current ->
-            current.copy(snackbarMessage = null)
-        }
-    }
-
     companion object {
         val Factory : ViewModelProvider.Factory = viewModelFactory{
             initializer {
@@ -177,11 +185,5 @@ class OutstandingDuesViewModel( private val duesUseCase: OutstandingDuesUseCase 
             }
         }
     }
-
-
-
-
-
-
 
 }

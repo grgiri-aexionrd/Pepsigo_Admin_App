@@ -24,6 +24,8 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -34,10 +36,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.pepsigo.admin.R
 import com.pepsigo.admin.screens.commonComponents.ReportTopAppBar
 import com.pepsigo.admin.ui.theme.inversePrimaryLight
+import com.pepsigo.admin.utils.toAppError
 
 @Composable
 fun PurchaseScreen(
@@ -49,6 +53,7 @@ fun PurchaseScreen(
     // need to add pull to refresh to sync latest data
     val purchaseState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val refreshState = rememberPullToRefreshState()
 
     Scaffold(
         topBar = {
@@ -101,136 +106,170 @@ fun PurchaseScreen(
                 )
             }
         },
-        containerColor = inversePrimaryLight.copy(alpha = 0.35f)
-    ){innerPadding ->
-        Surface(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize(),
-            color = Color.Transparent
-        ){
-            when (val state = purchaseState) {
-                is PurchaseUiState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = stringResource(id = R.string.loading))
+        containerColor = MaterialTheme.colorScheme.inverseOnSurface
+    ) { innerPadding ->
+            Surface(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize(),
+                color = Color.Transparent
+            ) {
+                when (val state = purchaseState) {
+                    is PurchaseUiState.Loading -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(text = stringResource(id = R.string.loading))
+                        }
                     }
-                }
-                is PurchaseUiState.Error -> {
-                    val error = state.error
-                    ErrorView(
-                        message = error.userFriendlyMessage,
-                        onRetry = { viewModel.retry() }
-                    )
-                }
-                is PurchaseUiState.Success -> {
-                    val purchases = state.purchases.collectAsLazyPagingItems()
-                    PurchaseList(purchases,
-                        modifier = Modifier.padding(16.dp),
-                        onItemClick = { item ->
-                            Log.d("PurchaseScreen", "Item clicked: $item")
-                            viewModel.getPurchaseDetails(item) }
-                    )
-                }
 
-                is PurchaseUiState.PurchaseDetails -> {
-                    Log.d("PurchaseScreen", "PurchaseDetails: $state")
-                    when{
-                        state.isReturn -> {
-                            ReturnScreen(
-                                returnItem = state.purchase,
-                                returnItemList = state.returnItemList,
-                                onCheckedChange = { item, checked ->
-                                    Log.d("PurchaseScreen", "Item checked: $checked")
-                                    viewModel.toggleItemSelection(item, checked)
-                                },
-                                onQuantityChange = { item, qty ->
-                                    Log.d("PurchaseScreen", "Quantity changed: $qty")
-                                    viewModel.updateQuantity(item, qty)
-                                },
-                                currentSelection = viewModel.selectedItems,
-                                onReturnCancel = {
-                                    viewModel.exitReturnMode()
-                                },
-                                onReturn = {
-                                    viewModel.showReturnSummary()
-                                },
-                                modifier = Modifier.padding(16.dp),
-                            )
+                    is PurchaseUiState.Error -> {
+                        val error = state.error
+                        ErrorView(
+                            message = error.userFriendlyMessage,
+                            onRetry = { viewModel.retry() }
+                        )
+                    }
 
+                    is PurchaseUiState.Success -> {
+                        val purchases = state.purchases.collectAsLazyPagingItems()
+                        val isRefreshing = purchases.loadState.refresh is LoadState.Loading
+                        PullToRefreshBox(
+                            isRefreshing = isRefreshing,
+                            onRefresh = { purchases.refresh() },
+                            state = refreshState,
+//                            modifier = Modifier.padding(innerPadding)
+                        ) {
+                            when (val refresh = purchases.loadState.refresh) {
+                                is LoadState.Error -> {
+                                    val appError = refresh.error.toAppError()
+
+                                    ErrorView(
+                                        message = appError.userFriendlyMessage,
+                                        onRetry = { purchases.retry() }
+                                    )
+                                }
+                                is LoadState.NotLoading -> {
+                                    PurchaseList(
+                                        purchases,
+                                        modifier = Modifier.padding(16.dp),
+                                        onItemClick = { item ->
+                                            Log.d("PurchaseScreen", "Item clicked: $item")
+                                            viewModel.getPurchaseDetails(item)
+                                        }
+                                    )
+                                }
+
+                                else -> {}
+                            }
                         }
-                        state.isReturnSummary -> {
-                            Log.d("PurchaseScreen", "ReturnSummary: $state")
-                            ReturnSummaryScreen(
-                                purchaseId = state.purchase.purchase.purchaseId,
-                                invoiceNumber = state.purchase.purchase.invoiceNumber,
-                                returnSummaryItem = state.returnItemList,
-                                onReturnCancel = {
-                                    viewModel.showReturnScreen(state.purchase)
-                                },
-                                onReturn = {
-                                    viewModel.returnPurchase(state.returnItemList,state.purchase.purchase.purchaseId )
-                                },
-                                modifier = Modifier.padding(16.dp)
-                            )
-                        }
-                        else -> {
-                            PurchaseDetails(
-                                purchase = state.purchase,
-                                onCancelClick = { id ->
-                                    Log.d("PurchaseScreen", "To cancel item : $id")
-                                    viewModel.cancelPurchase(id)
-                                },
-                                onReturnClick = {
-                                    Log.d("PurchaseScreen", "To return item : $it")
-                                    viewModel.showReturnScreen(it)
+                    }
+
+                    is PurchaseUiState.PurchaseDetails -> {
+                        Log.d("PurchaseScreen", "PurchaseDetails: $state")
+                        when {
+                            state.isReturn -> {
+                                ReturnScreen(
+                                    returnItem = state.purchase,
+                                    returnItemList = state.returnItemList,
+                                    onCheckedChange = { item, checked ->
+                                        Log.d("PurchaseScreen", "Item checked: $checked")
+                                        viewModel.toggleItemSelection(item, checked)
+                                    },
+                                    onQuantityChange = { item, qty ->
+                                        Log.d("PurchaseScreen", "Quantity changed: $qty")
+                                        viewModel.updateQuantity(item, qty)
+                                    },
+                                    currentSelection = viewModel.selectedItems,
+                                    onReturnCancel = {
+                                        viewModel.exitReturnMode()
+                                    },
+                                    onReturn = {
+                                        viewModel.showReturnSummary()
+                                    },
+                                    modifier = Modifier.padding(16.dp),
+                                )
+
+                            }
+
+                            state.isReturnSummary -> {
+                                Log.d("PurchaseScreen", "ReturnSummary: $state")
+                                ReturnSummaryScreen(
+                                    purchaseId = state.purchase.purchase.purchaseId,
+                                    invoiceNumber = state.purchase.purchase.invoiceNumber,
+                                    returnSummaryItem = state.returnItemList,
+                                    onReturnCancel = {
+                                        viewModel.showReturnScreen(state.purchase)
+                                    },
+                                    onReturn = {
+                                        viewModel.returnPurchase(
+                                            state.returnItemList,
+                                            state.purchase.purchase.purchaseId
+                                        )
+                                    },
+                                    modifier = Modifier.padding(16.dp)
+                                )
+                            }
+
+                            else -> {
+                                PurchaseDetails(
+                                    purchase = state.purchase,
+                                    onCancelClick = { id ->
+                                        Log.d("PurchaseScreen", "To cancel item : $id")
+                                        viewModel.cancelPurchase(id)
+                                    },
+                                    onReturnClick = {
+                                        Log.d("PurchaseScreen", "To return item : $it")
+                                        viewModel.showReturnScreen(it)
 //                            viewModel.returnPurchase(it)
-                                },
-                                modifier = Modifier.padding(16.dp),
-                                isLoading = state.isLoading
-                            )
+                                    },
+                                    modifier = Modifier.padding(16.dp),
+                                    isLoading = state.isLoading
+                                )
+                            }
+                        }
+                        state.snackbarMessage?.let { message ->
+                            LaunchedEffect(message) {
+                                snackbarHostState.showSnackbar(
+                                    message = message,
+                                    duration = SnackbarDuration.Short
+                                )
+                                viewModel.clearSnackbarMessage()
+                            }
                         }
                     }
-                    state.snackbarMessage?.let { message ->
-                        LaunchedEffect(message) {
-                            snackbarHostState.showSnackbar(
-                                message = message,
-                                duration = SnackbarDuration.Short
-                            )
-                            viewModel.clearSnackbarMessage()
-                        }
-                    }
+
+                    else -> {}
                 }
-                else -> {}
+
+            }
+            BackHandler {
+                when (purchaseState) {
+                    is PurchaseUiState.PurchaseDetails if (purchaseState as PurchaseUiState.PurchaseDetails).isReturn -> {
+                        viewModel.exitReturnMode()
+                    }
+
+                    is PurchaseUiState.PurchaseDetails if (purchaseState as PurchaseUiState.PurchaseDetails).isReturnSummary -> {
+                        viewModel.showReturnScreen((purchaseState as PurchaseUiState.PurchaseDetails).purchase)
+                    }
+
+                    // If user is inside purchase details but not return mode → go back to list
+                    is PurchaseUiState.PurchaseDetails -> {
+                        viewModel.loadPurchases()
+                    }
+
+                    // Any other state → go back normally
+                    else -> onNavigateBack()
+                }
             }
 
         }
-        BackHandler {
-            when (purchaseState) {
-                is PurchaseUiState.PurchaseDetails if (purchaseState as PurchaseUiState.PurchaseDetails).isReturn -> {
-                    viewModel.exitReturnMode()
-                }
-                is PurchaseUiState.PurchaseDetails if (purchaseState as PurchaseUiState.PurchaseDetails).isReturnSummary -> {
-                    viewModel.showReturnScreen((purchaseState as PurchaseUiState.PurchaseDetails).purchase)
-                }
-
-                // If user is inside purchase details but not return mode → go back to list
-                is PurchaseUiState.PurchaseDetails -> {
-                    viewModel.loadPurchases()
-                }
-
-                // Any other state → go back normally
-                else -> onNavigateBack()
-            }
-        }
-
     }
 
 
 
-}
+
 
 @Composable
 fun ErrorView(message: String, onRetry: () -> Unit) {

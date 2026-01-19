@@ -29,29 +29,44 @@ import kotlinx.coroutines.delay
 fun CheckScreen(
     viewModel: CheckScreenViewModel,
     onNavigateLogin: () -> Unit,
-    onNavigateHome: () -> Unit,
-
+    onNavigateHome: () -> Unit
 ) {
-
-    val isLoggedIn by viewModel.isLoggedIn.collectAsState()
+    val authState by viewModel.authState.collectAsState()
     val context = LocalContext.current
 
     LoadingScreen()
 
-    LaunchedEffect(isLoggedIn) {
-        when (isLoggedIn) {
-            is LogInState.LoggedIn -> {
-                Toast.makeText(context, "Welcome back!", Toast.LENGTH_SHORT).show()
+    LaunchedEffect(authState) {
+        if (authState != AuthState.Checking) {
+            delay(24) // ~ one frame (60fps)
+        }
+
+        when (authState) {
+            AuthState.Checking -> {
+                // Still checking, stay on loading
+            }
+
+            AuthState.Authenticated -> {
+                Toast.makeText(
+                    context,
+                    "Welcome back!",
+                    Toast.LENGTH_SHORT
+                ).show()
                 onNavigateHome()
             }
 
-            is LogInState.LoggedOut -> {
-                Toast.makeText(context, (isLoggedIn as LogInState.LoggedOut).msg, Toast.LENGTH_SHORT).show()
+            AuthState.Unauthenticated -> {
+                // 🔕 Silent navigation on cold start / logged out
                 onNavigateLogin()
             }
 
-            else -> {
-                // Still loading, do nothing
+            is AuthState.Error -> {
+                Toast.makeText(
+                    context,
+                    (authState as AuthState.Error).message,
+                    Toast.LENGTH_SHORT
+                ).show()
+                onNavigateLogin()
             }
         }
     }

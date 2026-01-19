@@ -11,7 +11,7 @@ import com.pepsigo.admin.utils.toCurrency
 fun PurchaseDto.toUiModel(): PurchaseUiModel {
     return PurchaseUiModel(
         id = id,
-        invoiceNumber = if (!invoiceNumber.isNullOrBlank() ) invoiceNumber else {"--"},
+        invoiceNumber = if (invoiceNumber.isNullOrBlank() ){"—"}  else invoiceNumber ,
         vendor = vendor.toDomain(),
         purchaseDate = formatExpiryDate(purchaseDate),
         subTotal = subTotal.toCurrency(),

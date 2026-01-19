@@ -65,7 +65,8 @@ fun PaymentSummaryScreen(
                 desc = stringResource(R.string.payment_summary),
                 onBackClick = { onNavigateBack() }
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.inverseOnSurface
     ) { innerPadding ->
         PullToRefreshBox(
             state = refreshState,
@@ -77,9 +78,9 @@ fun PaymentSummaryScreen(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(
-                        color = inversePrimaryLight.copy(alpha = 0.35f)
-                    )
+//                    .background(
+//                        color = inversePrimaryLight.copy(alpha = 0.35f)
+//                    )
                     .padding(innerPadding)
                     .padding(16.dp)
             ){
@@ -94,6 +95,16 @@ fun PaymentSummaryScreen(
                     )
 
                     PaymentTableHeader()
+                }
+
+                if (state.isError) {
+                    item {
+                        Text(
+                            text = state.snackbarMessage ?: "Error",
+                            modifier = Modifier.align(Alignment.Center)
+                                .padding(12.dp)
+                        )
+                    }
                 }
 
                 // table items
@@ -278,14 +289,7 @@ fun PaymentTotalStickyFooter(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.Q)
-@Preview(showBackground = true)
-@Composable
-fun PaymentSummaryScreenPreview() {
-//    PaymentSummaryScreen(
-//        onNavigateBack = {}
-//    )
-}
+
 
 
 

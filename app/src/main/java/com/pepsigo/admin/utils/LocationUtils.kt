@@ -10,7 +10,7 @@ import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.LatLng
 
-val DEFAULT_LOCATION = LatLng(12.9716, 77.5946) // Bangalore
+val DEFAULT_LOCATION = LatLng(12.7670627, 78.3276044)  // manjunatha agencies location
 
 @SuppressLint("MissingPermission")
 fun fetchCurrentLocation(

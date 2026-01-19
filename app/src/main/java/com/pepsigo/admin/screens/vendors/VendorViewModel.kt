@@ -28,12 +28,14 @@ sealed class VendorUiState {
     data class VendorList(
         val vendors: List<User> ,
         val snackbarMessage: String? = null,
+        val message: String? = null,
         val isError: Boolean = false
     ) : VendorUiState()
 
     data class AddEditVendor(
         val form: UserForm, // Replace Any with actual VendorForm data class
         val locations: List<Location>, // Replace Any with actual LocationRequest data class
+        val locationError: String? = null,
         val isEdit: Boolean,
         val isVendor: Boolean,
         val formErrors: Map<String, String> = emptyMap()
@@ -56,6 +58,10 @@ class VendorViewModel(
         getVendors()
     }
 
+    fun refresh(){
+        getVendors()
+    }
+
     fun getVendors(message: String? = null, isError: Boolean = false) {
         viewModelScope.launch {
             _vendorUiState.value = VendorUiState.Loading
@@ -69,6 +75,7 @@ class VendorViewModel(
 //                    _vendorUiState.value = VendorUiState.Error(error as AppError)
                     _vendorUiState.value = VendorUiState.VendorList(
                         vendors = emptyList(),
+                        message = (error as AppError).userFriendlyMessage,
                         snackbarMessage = (error as AppError).userFriendlyMessage,
                         isError = true
                     )
@@ -85,7 +92,10 @@ class VendorViewModel(
                    _vendorUiState.value = VendorUiState.AddEditVendor(UserForm(), locations, isEdit = false, isVendor = true)
                }
                is LocationResult.Error -> {
-                   _vendorUiState.value = VendorUiState.Error(AppError.Unknown(result.message, result.throwable))
+//                   _vendorUiState.value = VendorUiState.Error(AppError.Unknown(result.message, result.throwable))
+                   val error = result.message
+                   _vendorUiState.value = VendorUiState.AddEditVendor(UserForm(), locations = emptyList(),locationError = error, isEdit = false, isVendor = true)
+
                }
            }
         }
@@ -118,8 +128,27 @@ class VendorViewModel(
                 }
 
                 is LocationResult.Error -> {
-                    _vendorUiState.value =
-                        VendorUiState.Error(AppError.Unknown(result.message, result.throwable))
+                    val vendorForm = UserForm(
+                        id = vendor.id,
+                        name = vendor.name,
+                        businessName = vendor.businessName,
+                        mobile = vendor.mobile,
+                        email = vendor.email,
+                        address1 = vendor.address1,
+                        address2 = vendor.address2,
+                        state = vendor.state,
+                        pincode = vendor.pincode,
+                        locationId = vendor.locationId
+                    )
+                    _vendorUiState.value = VendorUiState.AddEditVendor(
+                        vendorForm,
+                        locations = emptyList(),
+                        locationError = result.message,
+                        isEdit = true,
+                        isVendor = true
+                    )
+//                        VendorUiState.Error(AppError.Unknown(result.message, result.throwable))
+
                 }
             }
         }

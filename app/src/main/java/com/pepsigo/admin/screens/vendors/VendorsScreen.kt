@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -24,6 +25,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -45,6 +48,8 @@ fun VendorsScreen(
 ) {
     val vendorState by  viewModel.vendorUiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val refreshState = rememberPullToRefreshState()
+
 
     Scaffold (
         topBar = {
@@ -57,7 +62,7 @@ fun VendorsScreen(
         floatingActionButton = {
             if (vendorState is VendorUiState.VendorList) {
                 FloatingActionButton(onClick = { viewModel.addVendors() }) {
-                    Icon(Icons.Default.Add, contentDescription = "Add Customer")
+                    Icon(Icons.Default.Add, contentDescription = "Add Vendor")
                 }
             }
         },
@@ -73,60 +78,81 @@ fun VendorsScreen(
                 )
             }
         },
-        containerColor = inversePrimaryLight.copy(alpha = 0.35f)
-//        containerColor = MaterialTheme.colorScheme.inverseOnSurface
+        containerColor = MaterialTheme.colorScheme.inverseOnSurface
     ){ innerPadding ->
-        Surface(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize(),
-            color = Color.Transparent
-        ){
-            when (val state = vendorState) {
-                is VendorUiState.Loading -> {
-                    Box(modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                        Text(text = "Loading...", style = MaterialTheme.typography.bodyLarge)
+        PullToRefreshBox(
+            isRefreshing = vendorState is VendorUiState.Loading,
+            onRefresh = { viewModel.refresh() },
+            modifier = Modifier.fillMaxSize(),
+            state = refreshState
+        ) {
+            Surface(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize(),
+                color = Color.Transparent
+            ) {
+                when (val state = vendorState) {
+                    is VendorUiState.Loading -> {
+                        Box(
+                            modifier = Modifier.wrapContentSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                            Text(text = "Loading...", style = MaterialTheme.typography.bodyLarge)
+                        }
+
                     }
 
-                }
-                is VendorUiState.VendorList -> {
-                    VendorListScreen(
-                        vendors = state.vendors,
-                        onEditVendor = {  vendor -> viewModel.editVendor(vendor) },
-                        onToggle = {  id -> viewModel.toggleVendorStatus(id) },
-                        modifier = Modifier.padding(16.dp)
-                    )
-                    state.snackbarMessage?.let { message ->
-                        LaunchedEffect(message) {
-                            snackbarHostState.showSnackbar(
-                                message = message,
-                                duration = SnackbarDuration.Short
-                            )
-                            viewModel.clearSnackbarMessage()
+                    is VendorUiState.VendorList -> {
+                        VendorListScreen(
+                            vendors = state.vendors,
+                            message = state.message,
+                            onEditVendor = { vendor -> viewModel.editVendor(vendor) },
+                            onToggle = { id -> viewModel.toggleVendorStatus(id) },
+                            modifier = Modifier.padding(16.dp)
+                        )
+                        state.snackbarMessage?.let { message ->
+                            LaunchedEffect(message) {
+                                snackbarHostState.showSnackbar(
+                                    message = message,
+                                    duration = SnackbarDuration.Short
+                                )
+                                viewModel.clearSnackbarMessage()
+                            }
                         }
                     }
-                }
-                is VendorUiState.AddEditVendor -> {
-                    VendorFormScreen(
-                        viewModel = viewModel,
-                        state = state ,
-                        onPickLocation = onPickLocation,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
 
-                is VendorUiState.Error -> {
-                    val error = (vendorState as VendorUiState.Error).message
-                    Text(
-                        text = "Error: ${error.userFriendlyMessage}",
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-                else -> {}
+                    is VendorUiState.AddEditVendor -> {
+                        VendorFormScreen(
+//                            viewModel = viewModel,
+                            state = state,
+                            onPickLocation = onPickLocation,
+                            onValueChange = { property, value ->
+                                viewModel.updateFormField(property, value)
+                            },
+                            onLocationChange = {  id ->
+                                viewModel.updateLocation(id)
+                            },
+                            onSave = {  form -> viewModel.saveVendor(form) },
+                            onCancel = { viewModel.getVendors() },
+                            onBack = { viewModel.getVendors() },
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
 
+                    is VendorUiState.Error -> {
+                        val error = (vendorState as VendorUiState.Error).message
+                        Text(
+                            text = "Error: ${error.userFriendlyMessage}",
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+
+                    else -> {}
+
+                }
             }
         }
 

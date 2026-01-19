@@ -51,5 +51,8 @@ data class UserLocationUI(
     val lat: Double,
     val lng: Double,
   //  val routeStatus: String? = "", // only for delivery executives
-    val category: String   // admin, customer, delivery
+    val category: String,   // admin, customer, delivery
+    val rotation : Float = 0f // for delivery executives
 )
+
+

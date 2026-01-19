@@ -33,6 +33,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -114,39 +115,35 @@ fun BatchSummaryScreen(
         ){
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 // product dropdown
-                item {
+                stickyHeader {
                     ProductDropDown(
                         state = batchSummary,
                         onSelected = { selected ->
-                            viewModel.updateSelectedInventory(selected) },
+                            viewModel.updateSelectedInventory(selected)
+                        },
                         onGetDetails = { selectedId ->
                             viewModel.fetchBatchStockDetails(selectedId)
+                        },
+                        onFilterSelect = { filter ->
+                            viewModel.updateFilter(filter)
                         }
                     )
+
+
                 }
-
                 if(batchSummary.hasFetchedDetails) {
-
                     // BatchSummaryCard
-                    item {
-                        BatchSummaryCard(
-                            state = batchSummary
-                        )
-                    }
-                    // FilterRow
-                    item {
-                        FilterRow(
-                            selectedFilter = batchSummary.filter,
-                            onFilterSelect = {  filter ->
-                                viewModel.updateFilter(filter)
-                            }
-                        )
+//                    item {
+//                        BatchSummaryCard(
+//                            count = batchSummary.count,
+//                            qty = batchSummary.totalAvailableQuantity,
+//                            inventorySelected = batchSummary.selectedInventory
+//                        )
+//                    }
 
-                    }
                     // Batch Stock Detail Card
                     if (visibleBatchData.isEmpty()) {
                         item {
@@ -179,16 +176,12 @@ fun BatchSummaryScreen(
 fun ProductDropDown(
     state: BatchSummaryUiState,
     onSelected: (DropDownList?) -> Unit,
-    onGetDetails: (Int?) -> Unit
+    onGetDetails: (Int?) -> Unit,
+    onFilterSelect: (BatchFilter) -> Unit
 ){
-    Card(
-        modifier = Modifier
-            .fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp) // minimal elevation for separation
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface
     ){
         Column(
             modifier = Modifier
@@ -197,7 +190,8 @@ fun ProductDropDown(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(stringResource(R.string.product_dropdown),
-                style = MaterialTheme.typography.titleLarge
+                style = MaterialTheme.typography.titleLarge,
+                textAlign = TextAlign.Center
             )
             DropDown(
                 dropDown = state.inventory,
@@ -230,52 +224,58 @@ fun ProductDropDown(
                     Text("Get Details", color = Color.White)
                 }
             }
+            FilterRow(
+                selectedFilter = state.filter,
+                onFilterSelect = {  filter ->
+                    onFilterSelect(filter)
+                }
+            )
+
         }
     }
 }
 
 @Composable
 fun BatchSummaryCard(
-    state: BatchSummaryUiState
-){
+    count: Int,
+    qty: Int,
+    inventorySelected: DropDownList?
+) {
     Card(
         modifier = Modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp) // minimal elevation for separation
-    ){
-        Column(
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp) // minimal elevation for separation
+    ) {
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            val name: String = if (state.selectedInventory?.id == -1) "All Items" else state.selectedInventory?.name!!
-
-            Text(text = name,
-                style = MaterialTheme.typography.titleLarge
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text(text ="Total Count",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    Text(text = state.count.toString())
-                }
-                Column {
-                    Text(text ="Total Quantity",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    Text(text = state.totalAvailableQuantity.toString())
-                }
-
+//            val name: String =
+//                if (inventorySelected?.id == -1) "All Items" else inventorySelected?.name!!
+//            Text(
+//                text = name,
+//                style = MaterialTheme.typography.titleLarge
+//            )
+            Column {
+                Text(
+                    text = "Count",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(text = count.toString())
+            }
+            Column {
+                Text(
+                    text = " Qty",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(text = qty.toString())
             }
 
         }
@@ -296,19 +296,20 @@ fun FilterRow(
     selectedFilter: BatchFilter ,
     onFilterSelect: (BatchFilter) -> Unit
 ){
-    Row(
-        modifier = Modifier.horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ){
-        BatchFilter.entries.forEach { filter ->
-            FilterChip(
-                selected = selectedFilter == filter,
-                onClick = { onFilterSelect(filter) },
-                label = { Text(filter.label) }
-            )
-            Spacer(modifier = Modifier.width(8.dp))
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            BatchFilter.entries.forEach { filter ->
+                FilterChip(
+                    selected = selectedFilter == filter,
+                    onClick = { onFilterSelect(filter) },
+                    label = { Text(filter.label) }
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+            }
         }
-    }
+
 }
 
 @Composable
@@ -337,19 +338,20 @@ fun BatchStockDetailCard(
 ) {
     Card(
         modifier = Modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp) // minimal elevation for separation
-    ){
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp) // minimal elevation for separation
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
-        ){
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -359,7 +361,7 @@ fun BatchStockDetailCard(
                     text = batch.itemName,
                     style = MaterialTheme.typography.titleMedium
                 )
-                Row(horizontalArrangement = Arrangement.End){
+                Row(horizontalArrangement = Arrangement.End) {
                     BatchStatusChip(
                         status = batch.stockStatus,
                     )
@@ -369,44 +371,43 @@ fun BatchStockDetailCard(
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(4.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
-            ){
-                Column(modifier = Modifier
-                    .wrapContentSize()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .wrapContentSize()
                 ) {
                     Text(text = "Batch #${batch.batchId}")
-                    Text(text = batch.unit)
+                    Text(text = "Available: ${batch.availableQuantity} ${batch.unit}")
                 }
                 Text(text = "Expiry: ${batch.expiryDate}")
 
             }
             HorizontalDivider()
-//            Spacer(modifier = Modifier.height(4.dp))
-            Text(text = "Available: ${batch.availableQuantity} units")
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
-            ){
-                Column(modifier = Modifier
-                    .wrapContentSize()
-                ){
+            ) {
+                Column(
+                    modifier = Modifier
+                        .wrapContentSize()
+                ) {
                     Text("Cost Price")
                     Text("₹${batch.costPrice}")
                 }
-                Column(modifier = Modifier
-                    .wrapContentSize()
-                ){
+                Column(
+                    modifier = Modifier
+                        .wrapContentSize()
+                ) {
                     Text("Sale Price")
                     Text("₹${batch.salePrice}")
                 }
 
             }
-
 
 
         }

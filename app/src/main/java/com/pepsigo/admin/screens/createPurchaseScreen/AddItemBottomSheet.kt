@@ -44,6 +44,7 @@ import com.pepsigo.admin.R
 import com.pepsigo.admin.constants.DateSelectionMode
 import com.pepsigo.admin.screens.commonComponents.DockedDatePicker
 import com.pepsigo.admin.screens.commonComponents.DropDown
+import com.pepsigo.admin.screens.reports.DropDownErrorCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -123,15 +124,19 @@ fun AddItemBottomSheet(
                 // Inventory DropDown
                 item {
                     Text(stringResource(R.string.inventory))
-                    DropDown(
-                        dropDown = uiState.inventoryItem,
-                        error = uiState.addItemErrors.productError,
-                        label = "",
-                        selected = uiState.selectedInventory,
-                        onSelected = { updateSelectedInventory(it) },
-                        labelExtractor = { it.prodName },
-                        isCreatePurchase = true
-                    )
+                    if(uiState.inventoryError != null){
+                        DropDownErrorCard(error = uiState.inventoryError)
+                    }else {
+                        DropDown(
+                            dropDown = uiState.inventoryItem,
+                            error = uiState.addItemErrors.productError,
+                            label = "",
+                            selected = uiState.selectedInventory,
+                            onSelected = { updateSelectedInventory(it) },
+                            labelExtractor = { it.prodName },
+                            isCreatePurchase = true
+                        )
+                    }
                 }
 
                 //Quantity

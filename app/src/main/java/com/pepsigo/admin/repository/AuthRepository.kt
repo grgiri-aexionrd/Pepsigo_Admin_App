@@ -8,6 +8,8 @@ import com.pepsigo.admin.model.FCMTokenUpdateResponse
 import com.pepsigo.admin.model.LoginRequest
 import com.pepsigo.admin.network.ApiService
 import com.pepsigo.admin.utils.wrapError
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okio.IOException
 import retrofit2.HttpException
 
@@ -16,30 +18,16 @@ class AuthRepository (
     private val userPreferenceRepository: UserPreferenceRepository
 ) {
     suspend fun login(email: String, password: String): Result<Unit> {
-        return try {
-            Log.d("LSAuthRepository", "calling login API")
-            val response = apiService.login(LoginRequest(email, password))
-            Log.d("LSApiService", "API response received: $response")
+        return withContext(Dispatchers.IO) {
+            wrapError {
+                val response = apiService.login(LoginRequest(email, password))
+                val token = response.token
 
-            val token = response.token
+                if (token.isBlank()) throw IllegalStateException("Login Failed")
 
-            if (token.isNotEmpty()) {
                 userPreferenceRepository.saveToken(token)
-                Log.d("LSResponse", "Login successful, token,user details saved")
-                Result.success(Unit)
-            } else {
-                Result.failure(Exception("Invalid response"))
+                Unit
             }
-
-        } catch (e: IOException) {
-            Log.d("LSAuthRepository", "Network error during login: ${e.localizedMessage}")
-            Result.failure(Exception("Network error: ${e.localizedMessage}"))
-        } catch (e: HttpException) {
-            Log.d("LSAuthRepository", "HTTP error during login: ${e.code()}")
-            Result.failure(Exception("Server error: ${e.code()}"))
-        }catch (e: Exception) {
-            Log.d("LSAuthRepository", "Unexpected error during login: ${e.localizedMessage}")
-            Result.failure(Exception("Unexpected error: ${e.localizedMessage}"))
         }
     }
 
@@ -53,21 +41,17 @@ class AuthRepository (
     }
 
     suspend fun checkLogin(): Result<CheckLoginResponse> {
-        return wrapError {
-            val response = apiService.checkLogin()
-            Log.d("LGSAuthRepository", "Check login API response: $response")
-            response
+        return withContext( Dispatchers.IO) {
+            wrapError {
+                apiService.checkLogin()
+            }
         }
     }
-
 
     suspend fun logout() {
         userPreferenceRepository.clearToken()
         Log.d("LGSAuthRepository", "User logged out, preferences cleared")
     }
-
-    // collecting the token from DataStore to check login status now done via checkLogin API
-//    val isLoggedIn: Flow<Boolean> = userPreferenceRepository.token.map { it.isNotEmpty() }
 
 
 }

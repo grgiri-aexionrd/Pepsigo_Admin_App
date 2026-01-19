@@ -48,7 +48,12 @@ import com.pepsigo.admin.model.UserResponse
 import com.pepsigo.admin.model.VendorLedgerResponse
 import com.pepsigo.admin.model.DailyCollectionResponse
 import com.pepsigo.admin.model.DeliveryPerformanceResponse
+import com.pepsigo.admin.model.ItemWiseSalesResponse
 import com.pepsigo.admin.model.PaymentSummaryResponse
+import com.pepsigo.admin.model.PaymentsPaginatedResponseDto
+import com.pepsigo.admin.model.PromotionalOfferCreate
+import com.pepsigo.admin.model.PromotionalOfferCreateResponse
+import com.pepsigo.admin.model.SalesPaginatedResponseDto
 import retrofit2.http.POST
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -165,8 +170,6 @@ interface ApiService {
     suspend fun toggleRoute(@Path("id") id: Int ): RouteResponse<LocationDto>
 
 
-
-
     // Inventory endpoints
     @GET("inventory")
     suspend fun getInventory(): GetInventoryResponse
@@ -210,6 +213,27 @@ interface ApiService {
     // Promotional Offer
     @GET("customers/{id}/free-products")
     suspend fun getPromotionalOffers(@Path("id") id: Int): PromotionalOfferResponse<List<PromotionalOfferDto>>
+
+    @POST("customers/{id}/free-products")
+    suspend fun addPromotionalOffer(
+        @Path("id") id: Int,
+        @Body body: PromotionalOfferCreate
+    ): PromotionalOfferCreateResponse
+
+    // Sales endpoint
+    @GET("sales")
+    suspend fun getSales(@Query("page") page: Int): SalesPaginatedResponseDto
+
+    // Payment endpoint
+    @GET("payments")
+    suspend fun getPayments(
+        @Query("page") page: Int,
+        @Query("transaction_type") transactionType: String? = null,
+        @Query("customer_id") customerId: Int? = null,
+        @Query("date") date: String? = null
+    ): PaymentsPaginatedResponseDto
+
+
 
 
     // Reports endpoints
@@ -276,6 +300,13 @@ interface ApiService {
         @Query("from") from: String,
         @Query("to") to: String
     ): PaymentSummaryResponse
+
+    // ItemWiseSales
+    @GET("item-sales")
+    suspend fun itemWiseSales(
+        @Query("from") from: String,
+        @Query("to") to: String
+    ): ItemWiseSalesResponse
 
 
 }

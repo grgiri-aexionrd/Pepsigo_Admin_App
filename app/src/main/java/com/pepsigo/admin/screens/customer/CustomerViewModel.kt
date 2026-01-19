@@ -17,6 +17,7 @@ import com.pepsigo.admin.repository.LocationRepository
 import com.pepsigo.admin.repository.UserRepository
 import com.pepsigo.admin.screens.location.Location
 import com.pepsigo.admin.utils.AppError
+import com.pepsigo.admin.utils.toApiNullable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -26,13 +27,18 @@ sealed class CustomerUiState {
     object Loading : CustomerUiState()
 
     data class CustomerList(
-        val customers: List<User>
+        val customers: List<User>,
+        val snackbarMessage: String? = null,
+        val message: String? = null,
+        val isError: Boolean = false
     ) : CustomerUiState()
 
     data class AddEditCustomer(
         val form: UserForm,
         val locations: List<Location>,
-        val isEdit: Boolean
+        val locationError: String? = null,
+        val isEdit: Boolean,
+        val formErrors: Map<String, String> = emptyMap()
     ): CustomerUiState()
 
     data class Error(val message: AppError) : CustomerUiState()
@@ -48,16 +54,26 @@ class CustomerViewModel(private val repository: UserRepository,
         getCustomers()
     }
 
-    fun getCustomers() {
+    fun refresh(){
+        getCustomers()
+    }
+
+    fun getCustomers(message: String? = null, isError: Boolean = false) {
         viewModelScope.launch {
             _customerUiState.value = CustomerUiState.Loading
             val result = repository.getUsers(role = "customer")
             result
                 .onSuccess { customers ->
-                    _customerUiState.value = CustomerUiState.CustomerList(customers)
+                    _customerUiState.value = CustomerUiState.CustomerList(customers, snackbarMessage = message, isError = isError)
                 }
                 .onFailure { error ->
-                    _customerUiState.value = CustomerUiState.Error(error as AppError)
+//                    CustomerUiState.Error(error as AppError)
+                    _customerUiState.value = CustomerUiState.CustomerList(
+                        customers = emptyList(),
+                        message = (error as AppError).userFriendlyMessage,
+                        snackbarMessage = (error as AppError).userFriendlyMessage,
+                        isError = true
+                    )
                 }
         }
 
@@ -74,8 +90,12 @@ class CustomerViewModel(private val repository: UserRepository,
                     )
                 }
                 is LocationResult.Error -> {
-                    _customerUiState.value =
-                        CustomerUiState.Error(AppError.Unknown(result.message, result.throwable))
+                    _customerUiState.value = CustomerUiState.AddEditCustomer(
+                        form = UserForm(),
+                        locations = emptyList(),
+                        locationError = result.message,
+                        isEdit = false
+                    )
                 }
             }
 
@@ -120,16 +140,29 @@ class CustomerViewModel(private val repository: UserRepository,
                     _customerUiState.value = CustomerUiState.AddEditCustomer(
                         form = customerForm,
                         locations = locations,
+                        locationError = null,
                         isEdit = true
                     )
                 }
 
                 is LocationResult.Error -> {
-                    _customerUiState.value = CustomerUiState.Error(
-                        AppError.Unknown(
-                            result.message,
-                            result.throwable
-                        )
+                    val customerForm = UserForm(
+                        id = form.id,
+                        name = form.name,
+                        mobile = form.mobile,
+                        email = form.email,
+                        address1 = form.address1,
+                        address2 = form.address2,
+                        state = form.state,
+                        pincode = form.pincode,
+                        locationId = form.locationId,
+                        coordinates = "${form.latitude}, ${form.longitude}"
+                    )
+                    _customerUiState.value = CustomerUiState.AddEditCustomer(
+                        form = customerForm,
+                        locations = emptyList(),
+                        locationError = result.message,
+                        isEdit = true
                     )
                 }
             }
@@ -138,6 +171,21 @@ class CustomerViewModel(private val repository: UserRepository,
 
 
         fun saveCustomer(form: UserForm) {
+            val errors = mutableMapOf<String, String>()
+
+            if (form.name.isBlank()) errors["name"] = "Name cannot be empty"
+            if (form.mobile.isBlank() || form.mobile.length != 10) errors["mobile"] = "Enter Valid MobileNumber "
+            if (form.address1.isBlank() || form.address2.isBlank()) errors["address1"] = "Address cannot be empty"
+            if (form.state.isBlank()) errors["state"] = "State cannot be empty"
+            if (form.pincode.isBlank() || form.pincode.length != 6 ) errors["pincode"] = "Enter Valid Pincode "
+
+//            if (form.businessName.isNullOrBlank() ) errors["businessName"] = "Business name is required"
+            if (errors.isNotEmpty()) {
+                _customerUiState.value = (_customerUiState.value as? CustomerUiState.AddEditCustomer)?.copy(
+                    formErrors = errors
+                ) ?: return
+                return
+            }
             viewModelScope.launch {
                 val result = if (form.id == null) {
                     repository.addCustomer(
@@ -150,7 +198,8 @@ class CustomerViewModel(private val repository: UserRepository,
                             pincode = form.pincode,
                             locationId = form.locationId,
                             latitude = form.coordinates.split(",")[0].trim().toDoubleOrNull(),
-                            longitude = form.coordinates.split(",")[1].trim().toDoubleOrNull()
+                            longitude = form.coordinates.split(",")[1].trim().toDoubleOrNull(),
+                            businessName = form.businessName?.toApiNullable()
                         )
                     )
                 } else {
@@ -167,18 +216,18 @@ class CustomerViewModel(private val repository: UserRepository,
                                 pincode = form.pincode,
                                 locationId = form.locationId,
                                 latitude = form.coordinates.split(",")[0].trim().toDoubleOrNull(),
-                                longitude = form.coordinates.split(",")[1].trim().toDoubleOrNull()
-
+                                longitude = form.coordinates.split(",")[1].trim().toDoubleOrNull(),
+                                businessName = form.businessName?.toApiNullable()
                             )
                         )
                     )
                 }
                 result
-                    .onSuccess {
-                        getCustomers()
+                    .onSuccess { successResponse ->
+                        getCustomers(successResponse.message, isError = false)
                     }
                     .onFailure { error ->
-                        _customerUiState.value = CustomerUiState.Error(error as AppError)
+                        getCustomers((error as AppError).userFriendlyMessage, isError = true)
                     }
             }
 
@@ -217,6 +266,14 @@ class CustomerViewModel(private val repository: UserRepository,
 
             }
         }
+
+    fun clearSnackbarMessage() {
+        val current = _customerUiState.value
+        if (current is CustomerUiState.CustomerList) {
+            _customerUiState.value = current.copy(snackbarMessage = null)
+        }
+
+    }
 
 
 

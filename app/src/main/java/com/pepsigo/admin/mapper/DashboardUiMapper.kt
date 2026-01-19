@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.ui.graphics.Color
+import com.google.android.gms.maps.model.LatLng
 import com.pepsigo.admin.model.Admin
 import com.pepsigo.admin.model.Customer
 import com.pepsigo.admin.model.DashboardUsers
@@ -21,6 +22,7 @@ import com.pepsigo.admin.model.MapSectionState
 import com.pepsigo.admin.model.MetricCardState
 import com.pepsigo.admin.model.MetricsData
 import com.pepsigo.admin.model.UserLocationUI
+import com.pepsigo.admin.utils.calculateBearing
 
 fun MetricsData.toSalesUi(): List<MetricCardState> {
     return listOf(
@@ -73,22 +75,35 @@ fun Customer.toUi(): UserLocationUI? {
     )
 }
 
-fun DeliveryExecutive.toUi(): UserLocationUI? {
+fun DeliveryExecutive.toUi(
+    previousLocations: MutableMap<Int, LatLng> // to calculate bearing
+): UserLocationUI? {
     if (latitude == null || longitude == null) return null
+
+    val current = LatLng(latitude, longitude)
+    val previous = previousLocations[id]
+
+    val rotation = if (previous != null) {
+        calculateBearing(previous, current)
+    } else 0f
+    previousLocations[id] = current
+
+
     return UserLocationUI(
         id = id,
         title = name,
         subtitle = routeStatus,
         lat = latitude,
         lng = longitude,
-        category = role
+        category = role,
+        rotation = rotation
     )
 }
 
-fun DashboardUsers.toMapUi(): MapSectionState {
+fun DashboardUsers.toMapUi(previousLocations: MutableMap<Int, LatLng>): MapSectionState {
     return MapSectionState.Loaded(
         admins = admins.mapNotNull { it.toUi() },
         customers = customers.mapNotNull { it.toUi() },
-        deliveryExecutives = deliveryExecutives.mapNotNull { it.toUi() }
+        deliveryExecutives = deliveryExecutives.mapNotNull { it.toUi(previousLocations) }
     )
 }

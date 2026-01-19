@@ -93,7 +93,7 @@ fun RouteScreen(
                 )
             }
         },
-        containerColor = inversePrimaryLight.copy(alpha = 0.35f),
+        containerColor = MaterialTheme.colorScheme.inverseOnSurface
     ){innerPadding ->
         PullToRefreshBox(
             isRefreshing = refreshing,

@@ -51,19 +51,27 @@ import com.pepsigo.admin.screens.vendors.VendorsScreen
 import com.pepsigo.admin.utils.AuthEventBus
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.Places
+import com.pepsigo.admin.screens.customer.CustomerUiState
 import com.pepsigo.admin.screens.home.NewHomeScreen
+import com.pepsigo.admin.screens.payment.PaymentScreen
+import com.pepsigo.admin.screens.profile.ProfileUiState
+import com.pepsigo.admin.screens.promotions.CreatePromotionsScreen
+import com.pepsigo.admin.screens.promotions.CreatePromotionsViewModel
 import com.pepsigo.admin.screens.reports.BatchSummaryScreen
 import com.pepsigo.admin.screens.reports.BatchSummaryViewModel
 import com.pepsigo.admin.screens.reports.ItemWiseSalesScreen
 import com.pepsigo.admin.screens.reports.DailyCollectionViewModel
 import com.pepsigo.admin.screens.reports.DeliveryPerformanceScreen
 import com.pepsigo.admin.screens.reports.DeliveryPerformanceViewModel
+import com.pepsigo.admin.screens.reports.ItemWiseSalesViewModel
 import com.pepsigo.admin.screens.reports.LedgerScreen
 import com.pepsigo.admin.screens.reports.LedgerViewModel
 import com.pepsigo.admin.screens.reports.PaymentSummaryScreen
 import com.pepsigo.admin.screens.reports.PaymentSummaryViewModel
 import com.pepsigo.admin.screens.reports.StockSummaryScreen
 import com.pepsigo.admin.screens.reports.StockSummaryViewModel
+import com.pepsigo.admin.screens.sales.SalesScreen
+import com.pepsigo.admin.screens.sales.SalesViewModel
 import com.pepsigo.admin.screens.splash.CheckScreen
 import com.pepsigo.admin.screens.splash.CheckScreenViewModel
 
@@ -90,6 +98,7 @@ fun StartApp(userPreferenceRepository: UserPreferenceRepository) {
             Toast.makeText(context, "Session expired. Please log in again.", Toast.LENGTH_LONG).show()
             navController.navigate("login") {
                 popUpTo(0) { inclusive = true }
+                launchSingleTop = true
             }
         }
     }
@@ -180,8 +189,20 @@ fun StartApp(userPreferenceRepository: UserPreferenceRepository) {
                     animationSpec = tween(300)
                 )
             }
-            ) {
+            ) {backStackEntry ->
+
             val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModel.Factory)
+            val savedStateHandle = backStackEntry.savedStateHandle
+            val mapResult = savedStateHandle.getStateFlow<LatLng?>("map_result", null)
+                .collectAsState()
+
+            LaunchedEffect(mapResult.value) {
+                mapResult.value?.let { latLng ->
+                    profileViewModel.updateProfileCoordinates(latLng.latitude, latLng.longitude)
+                    savedStateHandle["map_result"] = null
+                }
+            }
+
             ProfileScreen (
                 viewModel = profileViewModel,
                 onBackToProfileScreen = {
@@ -190,9 +211,33 @@ fun StartApp(userPreferenceRepository: UserPreferenceRepository) {
                 },
                 onNavigateBackToHome = {
                     navController.popBackStack("home", false)
-                }
+                },
+                onLocationUpdate = {
+                    val form = profileViewModel.uiState.value as ProfileUiState.EditProfile
+                    val latitude = form.profile.latitude.toDoubleOrNull()
+                    val longitude = form.profile.longitude.toDoubleOrNull()
+                    val latLng = if (latitude != null && longitude != null) LatLng(latitude, longitude) else null
+
+                    navController.currentBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("initial_location", latLng)
+
+                    navController.navigate("map") }
             )
 
+        }
+
+        composable("sales"){
+            val salesViewModel: SalesViewModel = viewModel(factory = SalesViewModel.Factory)
+            SalesScreen(
+                viewModel = salesViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToCreateSale = {}
+            )
+        }
+
+        composable("payment"){
+            PaymentScreen()
         }
 
         composable("location"){
@@ -234,7 +279,8 @@ fun StartApp(userPreferenceRepository: UserPreferenceRepository) {
         }
 
         composable("purchase") {
-            val purchaseViewModel: PurchaseViewModel = viewModel(factory = PurchaseViewModel.Factory)
+            val purchaseViewModel: PurchaseViewModel =
+                viewModel(factory = PurchaseViewModel.Factory)
 //            Log.d("SS_purchase", "Navigated to PurchaseScreen")
             PurchaseScreen(
                 viewModel = purchaseViewModel,
@@ -242,14 +288,15 @@ fun StartApp(userPreferenceRepository: UserPreferenceRepository) {
                 onNavigateToCreatePurchase = {
                     navController.navigate("create_purchase")
                 }
-                )
+            )
 
         }
 
         composable("create_purchase"){
             val createPurchaseViewModel: CreatePurchaseViewModel = viewModel(factory = CreatePurchaseViewModel.Factory)
             CreatePurchaseScreen(
-                viewModel = createPurchaseViewModel
+                viewModel = createPurchaseViewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
@@ -284,7 +331,24 @@ fun StartApp(userPreferenceRepository: UserPreferenceRepository) {
 
             CustomerScreen(
                 viewModel = customerViewModel,
-                onPickLocation = { navController.navigate("map") },
+                onPickLocation = {
+                    val form = (customerViewModel.customerUiState.value as CustomerUiState.AddEditCustomer).form
+
+                    val latLng = form.coordinates
+                        .takeIf { it.isNotBlank() }
+                        ?.split(",")
+                        ?.map { it.trim().toDoubleOrNull() }
+                        ?.let { list ->
+                            if (list.size == 2 && list[0] != null && list[1] != null) {
+                                LatLng(list[0]!!, list[1]!!)
+                            } else null
+                        }
+
+                    navController.currentBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("initial_location", latLng)
+                    navController.navigate("map")
+                                 },
                 onNavigateBackToHome = {
                     navController.popBackStack("home", false)
                 }
@@ -292,17 +356,14 @@ fun StartApp(userPreferenceRepository: UserPreferenceRepository) {
         }
 
         composable("map") {
-            val context = LocalContext.current
-            // 🔹 Initialize Places SDK once
-            if (!Places.isInitialized()) {
-                // API key from secrets/local.properties (avoid hardcoding)
-                Places.initializeWithNewPlacesApiEnabled(context.applicationContext, BuildConfig.MAPS_API_KEY)
-            }
 
-            val placesClient = remember { Places.createClient(context) }
+            val initialLocation =
+                navController.previousBackStackEntry
+                    ?.savedStateHandle
+                    ?.get<LatLng>("initial_location")
 
             MapScreen(
-                placesClient = placesClient,
+                initialLocation = initialLocation,
                 onLocationPicked = { lat, lng ->
                     navController.previousBackStackEntry
                         ?.savedStateHandle
@@ -317,9 +378,22 @@ fun StartApp(userPreferenceRepository: UserPreferenceRepository) {
             val promotionsViewModel: PromotionalOfferViewModel= viewModel(factory = PromotionalOfferViewModel.Factory)
 //            Log.d("SS4", "Navigated to PromotionsScreen")
             PromotionsScreen( promotionsViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToCreatePromotions = { navController.navigate("create_promotions"){
+                    launchSingleTop = true
+                    restoreState = true
+                } }
+            )
+        }
+
+        composable("create_promotions") {
+            val createPromotionsViewModel: CreatePromotionsViewModel = viewModel(factory = CreatePromotionsViewModel.Factory)
+            CreatePromotionsScreen(
+                viewModel = createPromotionsViewModel,
                 onNavigateBack = { navController.popBackStack() }
             )
         }
+
 
         composable("reports") {
 //            Log.d("SS8", "Navigated to FinanceScreen")
@@ -387,7 +461,10 @@ fun StartApp(userPreferenceRepository: UserPreferenceRepository) {
         }
 
         composable(Routes.ItemWiseSales) {
-            ItemWiseSalesScreen(onNavigateBack = { navController.popBackStack() })
+            val itemWiseSalesViewModel: ItemWiseSalesViewModel = viewModel(factory = ItemWiseSalesViewModel.Factory)
+            ItemWiseSalesScreen(
+                viewModel = itemWiseSalesViewModel,
+                onNavigateBack = { navController.popBackStack() })
         }
 
         composable(Routes.PaymentSummary) {

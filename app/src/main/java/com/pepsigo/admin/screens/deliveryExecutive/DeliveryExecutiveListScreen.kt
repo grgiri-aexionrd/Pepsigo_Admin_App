@@ -27,11 +27,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.pepsigo.admin.model.DeliveryExecutiveUiModel
 import com.pepsigo.admin.screens.customer.SearchBarSection
+import com.pepsigo.admin.screens.home.MetricCardError
 import com.pepsigo.admin.ui.theme.inversePrimaryLight
 
 @Composable
 fun DeliveryExecutiveListScreen(
     deliveryExecutives: List<DeliveryExecutiveUiModel>,
+    message: String?,
     onEdit:(id: Int) -> Unit,
     onToggle: (deliveryExecutive: DeliveryExecutiveUiModel) -> Unit,
     modifier: Modifier = Modifier
@@ -43,32 +45,36 @@ fun DeliveryExecutiveListScreen(
     val filteredExec = deliveryExecutives.filter { deliveryExecutive ->
         searchQuery.isBlank() || deliveryExecutive.name.contains(searchQuery, ignoreCase = true)
     }
-
-    Box(modifier = modifier
-        .fillMaxSize()) {
-        LazyColumn {
-
+        LazyColumn (
+            modifier = Modifier.padding(16.dp)
+        ){
             stickyHeader {
                 SearchBarSection (
                     searchQuery = searchQuery,
                     onQueryChange = { searchQuery = it }
                 )
-
             }
 
-            items(filteredExec) { deliveryExecutive ->
-                DeliveryExecutiveRow(
-                    deliveryExecutive = deliveryExecutive,
-                    onEdit = onEdit,
-                    onToggle = onToggle,
+            if( message != null && deliveryExecutives.isEmpty()){
+                item {
+                    MetricCardError(message)
+                }
+            }else {
+
+                items(filteredExec) { deliveryExecutive ->
+                    DeliveryExecutiveRow(
+                        deliveryExecutive = deliveryExecutive,
+                        onEdit = onEdit,
+                        onToggle = onToggle,
 //                    onClick = { selectedExec = deliveryExecutive }
-                )
+                    )
+                }
             }
         }
 
     }
 
-}
+
 
 @Composable
 fun DeliveryExecutiveRow(

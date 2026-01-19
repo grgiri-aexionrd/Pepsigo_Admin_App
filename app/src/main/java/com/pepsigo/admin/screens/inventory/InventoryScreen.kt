@@ -2,6 +2,7 @@ package com.pepsigo.admin.screens.inventory
 
 import android.os.Build
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -22,6 +23,8 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -45,6 +48,8 @@ fun InventoryScreen(
 ) {
     val inventoryState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val refreshState = rememberPullToRefreshState()
+
 
 
     Scaffold (
@@ -88,95 +93,109 @@ fun InventoryScreen(
                 )
             }
         },
-        containerColor = inversePrimaryLight.copy(alpha = 0.35f),
+        containerColor = MaterialTheme.colorScheme.inverseOnSurface
     ) { innerPadding ->
-        Surface(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize(),
-            color = Color.Transparent
+        PullToRefreshBox(
+            isRefreshing = inventoryState is InventoryUiState.Loading,
+            onRefresh = {  viewModel.refresh()  },
+            state = refreshState,
+            modifier = Modifier.padding(innerPadding)
         ) {
-            when (val state = inventoryState) {
-                is InventoryUiState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = stringResource(id = R.string.loading))
+            Surface(
+                modifier = Modifier
+//                .padding(innerPadding)
+                    .fillMaxSize(),
+                color = Color.Transparent
+            ) {
+                when (val state = inventoryState) {
+                    is InventoryUiState.Loading -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(text = stringResource(id = R.string.loading))
+                        }
                     }
-                }
 
-                is InventoryUiState.InventoryList -> {
-                    InventoryListScreen(
-                        inventoryItems = state.items,
-                        onClick = { item ->
-                            Log.d("InventoryScreen", "Clicked item: $item")
-                            viewModel.getInventoryById(item)
-                        },
-                        onEdit = { item ->
-                            Log.d("InventoryScreen", "Editing item: $item")
-                            viewModel.updateInventory(item) },
-                        onToggle = { id -> viewModel.toggleInventoryStatus(id) },
-                        modifier = Modifier.padding(16.dp)
+                    is InventoryUiState.InventoryList -> {
+                        InventoryListScreen(
+                            inventoryItems = state.items,
+                            message = state.message,
+                            onClick = { item ->
+                                Log.d("InventoryScreen", "Clicked item: $item")
+                                viewModel.getInventoryById(item)
+                            },
+                            onEdit = { item ->
+                                Log.d("InventoryScreen", "Editing item: $item")
+                                viewModel.updateInventory(item)
+                            },
+                            onToggle = { id -> viewModel.toggleInventoryStatus(id) },
+                            modifier = Modifier.padding(16.dp)
 //                        onRefresh = { viewModel.getInventories() }
-                    )
-                    state.snackbarMessage?.let { message ->
-                        LaunchedEffect(message) {
-                            snackbarHostState.showSnackbar(
-                                message = message,
-                                duration = SnackbarDuration.Short
-                            )
-                            viewModel.clearSnackbarMessage()
+                        )
+                        state.snackbarMessage?.let { message ->
+                            LaunchedEffect(message) {
+                                snackbarHostState.showSnackbar(
+                                    message = message,
+                                    duration = SnackbarDuration.Short
+                                )
+                                viewModel.clearSnackbarMessage()
+                            }
                         }
                     }
-                }
 
-                is InventoryUiState.InventoryDetails -> {
-
-                    Log.d("InventoryScreen", "Displaying details for item: ${state.itemDetails}")
-                    InventoryDetailScreen(
-                        inventoryDetail = state.itemDetails,
-                        isError = state.isError,
+                    is InventoryUiState.InventoryDetails -> {
+                        Log.d(
+                            "InventoryScreen",
+                            "Displaying details for item: ${state.itemDetails}"
+                        )
+                        InventoryDetailScreen(
+                            inventoryDetail = state.itemDetails,
+                            isError = state.isError,
 //                        onBack = { viewModel.getInventories() },
-                        modifier = Modifier.padding(16.dp)
-                    )
+                            modifier = Modifier.padding(16.dp)
+                        )
 
-                    state.snackbarMessage?.let { message ->
-                        LaunchedEffect(message) {
-                            snackbarHostState.showSnackbar(
-                                message = message,
-                                duration = SnackbarDuration.Short
-                            )
-                            viewModel.clearSnackbarMessage()
+                        state.snackbarMessage?.let { message ->
+                            LaunchedEffect(message) {
+                                snackbarHostState.showSnackbar(
+                                    message = message,
+                                    duration = SnackbarDuration.Short
+                                )
+                                viewModel.clearSnackbarMessage()
+                            }
                         }
+                        BackHandler() { viewModel.onBackFromDetails() }
                     }
-                }
 
-                is InventoryUiState.AddEditInventory -> {
-                    AddEditInventoryScreen(
-                        viewModel = viewModel,
-                        form = state.form,
-                        isEdit = state.isEdit,
-                        formErrors = state.formErrors,
+                    is InventoryUiState.AddEditInventory -> {
+                        AddEditInventoryScreen(
+                            viewModel = viewModel,
+                            form = state.form,
+                            isEdit = state.isEdit,
+                            formErrors = state.formErrors,
 //                        onFormChange = { /* viewModel.onFormChange(it)*/  },
-                        onSave =  { form ->
-                            Log.d("InventoryScreen", "Saving inventory: $form")
-                            viewModel.onSaveInventory(form) } ,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                    state.snackbarMessage?.let { message ->
-                        LaunchedEffect(message) {
-                            snackbarHostState.showSnackbar(
-                                message = message,
-                                duration = SnackbarDuration.Short
-                            )
-                            viewModel.clearSnackbarMessage()
+                            onSave = { form ->
+                                Log.d("InventoryScreen", "Saving inventory: $form")
+                                viewModel.onSaveInventory(form)
+                            },
+                            modifier = Modifier.padding(16.dp)
+                        )
+                        state.snackbarMessage?.let { message ->
+                            LaunchedEffect(message) {
+                                snackbarHostState.showSnackbar(
+                                    message = message,
+                                    duration = SnackbarDuration.Short
+                                )
+                                viewModel.clearSnackbarMessage()
+                            }
                         }
+                        BackHandler() { viewModel.onBackFromDetails() }
                     }
                 }
+
+
             }
-
-
         }
     }
 }

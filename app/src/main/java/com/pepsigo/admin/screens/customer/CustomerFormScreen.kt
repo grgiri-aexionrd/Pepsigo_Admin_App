@@ -40,8 +40,11 @@ import com.pepsigo.admin.screens.location.Location
 @Composable
 fun CustomerFormScreen(
     form: UserForm,
+
     viewModel: CustomerViewModel,
     locations: List<Location>,
+    locationError: String?,
+    formErrors : Map<String, String>,
     isEdit: Boolean,
     onPickLocation: () -> Unit,
     onSave: (UserForm) -> Unit,
@@ -63,6 +66,8 @@ fun CustomerFormScreen(
                 onValueChange = { newValue ->
                     viewModel.updateFormField(field.property, newValue)
                 },
+                isError = formErrors.containsKey(field.property.name),
+
                 label = field.label,
                 keyboardType = field.keyboardType
             )

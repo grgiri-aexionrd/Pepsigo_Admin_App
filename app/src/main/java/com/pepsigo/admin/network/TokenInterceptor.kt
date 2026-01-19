@@ -14,7 +14,6 @@ class TokenInterceptor(
         if (!token.isNullOrEmpty()) {
             requestBuilder.addHeader("Authorization", "Bearer $token")
         }
-
         return chain.proceed(requestBuilder.build())
     }
 }

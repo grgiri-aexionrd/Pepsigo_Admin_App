@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,6 +30,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -74,7 +76,6 @@ fun OutstandingDuesScreen(
             )
         },
         containerColor = MaterialTheme.colorScheme.inverseOnSurface
-
     ) { innerPadding ->
         PullToRefreshBox(
             isRefreshing = state.isRefreshing,
@@ -86,56 +87,61 @@ fun OutstandingDuesScreen(
             LazyColumn(
                 modifier = Modifier
                     .padding(innerPadding)
-                    .padding(16.dp)
+//                    .padding(16.dp)
             ) {
-                item {
-                    PrimaryTabRow(
-                        selectedTabIndex = selectedTab,
+                stickyHeader {
+                    Surface(
                         modifier = Modifier.fillMaxWidth(),
-                        containerColor = Color.Transparent
+                        color = MaterialTheme.colorScheme.surface
                     ) {
-                        tabs.forEachIndexed { index, tabTitle ->
-                            Tab(
-                                selected = selectedTab == index,
-                                onClick = { selectedTab = index },
-                                text = {
-                                    Text(
-                                        tabTitle, style = MaterialTheme.typography.bodyLarge,
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                        ) {
+                            PrimaryTabRow(
+                                selectedTabIndex = selectedTab,
+                                modifier = Modifier.fillMaxWidth(),
+                                containerColor = Color.Transparent
+                            ) {
+                                tabs.forEachIndexed { index, tabTitle ->
+                                    Tab(
+                                        selected = selectedTab == index,
+                                        onClick = { selectedTab = index },
+                                        text = {
+                                            Text(
+                                                tabTitle,
+                                                style = MaterialTheme.typography.bodyLarge,
+                                            )
+                                        }
                                     )
                                 }
-                            )
+                            }
+                            // dropdown
+                            when (selectedTab) {
+                                0 -> CustomerDropdown(
+                                    state,
+                                    onCustomerSelected = { viewModel.updateSelectedCustomer(it) },
+                                    onGetCustomerDues = { id ->
+                                        viewModel.getCustomerDues(id)
+                                    }
+                                )
+
+                                1 -> VendorDropdown(
+                                    state,
+                                    onVendorSelected = { viewModel.updateSelectedVendor(it) },
+                                    onGetVendorDues = { id ->
+                                        viewModel.getVendorDues(id)
+                                    }
+                                )
+                            }
+
                         }
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
                 }
 
                 item {
-                    when (selectedTab) {
-                        0 -> CustomerDropdown(
-                            state,
-                            onCustomerSelected = { viewModel.updateSelectedCustomer(it) },
-                            onGetCustomerDues = { id ->
-                                viewModel.getCustomerDues(id)
-                            }
-                        )
-
-                        1 -> VendorDropdown(
-                            state,
-                            onVendorSelected = { viewModel.updateSelectedVendor(it) },
-                            onGetVendorDues = { id ->
-                                viewModel.getVendorDues(id)
-                            }
-                        )
-                    }
-                }
-
-                item {
-                    HorizontalDivider()
                     Spacer(modifier = Modifier.height(8.dp))
                 }
-
-
-
                 when (selectedTab) {
                     // Customer list
                     0 -> {
@@ -149,7 +155,7 @@ fun OutstandingDuesScreen(
                         }
 
                         // 2️⃣ No customer selected (initial screen)
-                        if (state.selectedCustomer == null) {
+                        if (!state.customerDuesFetched ) {
                             Log.d("OutstandingDuesScreen", "No customer selected")
                             item {
                                 DropDownSelectionEmpty(stringResource(R.string.dropdown_selection_empty))
@@ -166,7 +172,7 @@ fun OutstandingDuesScreen(
                             return@LazyColumn
                         }
 
-                        if (state.customerDues.isEmpty()) {
+                        if ( state.customerDuesFetched && state.customerDues.isEmpty()) {
                             Log.d("OutstandingDuesScreen", "No dues recorded for this customer")
                             item { EmptyState(stringResource(R.string.empty_dues_customer)) }
                             return@LazyColumn
@@ -177,6 +183,7 @@ fun OutstandingDuesScreen(
                             key = { it.id }
                         ) { item ->
                             CustomerDuesCard(item)
+                            Spacer(modifier = Modifier.height(8.dp))
                         }
 
                     }
@@ -191,7 +198,7 @@ fun OutstandingDuesScreen(
 
                         }
                         // 2️⃣ No customer selected (initial screen)
-                        if (state.selectedVendor == null) {
+                        if (!state.vendorDuesFetched ) {
                             item {
                                 DropDownSelectionEmpty(stringResource(R.string.dropdown_selection_empty))
                             }
@@ -205,7 +212,7 @@ fun OutstandingDuesScreen(
                             return@LazyColumn
                         }
 
-                        if (state.vendorDues.isEmpty()) {
+                        if (state.vendorDuesFetched && state.vendorDues.isEmpty()) {
                             item { EmptyState(stringResource(R.string.empty_dues_vendor)) }
                             return@LazyColumn
                         }
@@ -215,6 +222,7 @@ fun OutstandingDuesScreen(
                             key = { it.id }
                         ) { item ->
                             VendorDuesCard(item)
+                            Spacer(modifier = Modifier.height(8.dp))
                         }
                     }
                 }
@@ -251,7 +259,7 @@ fun CustomerDropdown(
                 labelExtractor = { it.name },
                 onSelected = { onCustomerSelected(it) }
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Button(
                 onClick =  { onGetCustomerDues(state.selectedCustomer?.id) } ,
@@ -289,7 +297,7 @@ fun VendorDropdown(
                 labelExtractor = { it.name },
                 onSelected = { onVendorSelected(it) }
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Button(
                 onClick = { onGetVendorDues(state.selectedVendor?.id) },
@@ -331,52 +339,53 @@ fun CustomerDuesCard(
     item: CustomerDuesUi
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(4.dp),
-        border = CardDefaults.outlinedCardBorder()
+        elevation = CardDefaults.cardElevation(2.dp),
     ){
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ){
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
             ){
                 Text("${item.name} ",
-                    style = MaterialTheme.typography.titleLarge
+                    style = MaterialTheme.typography.titleMedium
                 )
                 Text("${item.due} ",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.error
-
                 )
 
             }
+            HorizontalDivider()
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ){
-                Text("Total Sale: ${item.totalSales} ",
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                Text("Paid: ${item.paid} ",
-                    style = MaterialTheme.typography.bodyLarge
-                )
-
+                Column{
+                    Text("Total Sale",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(item.totalSales)
+                }
+                Column{
+                    Text("Paid",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(item.paid)
+                }
             }
-
         }
-
     }
-
-
-
 }
 
 @Composable
@@ -384,49 +393,53 @@ fun VendorDuesCard(
     item: VendorDuesUi
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(4.dp),
-        border = CardDefaults.outlinedCardBorder()
+        elevation = CardDefaults.cardElevation(2.dp),
     ){
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ){
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
             ){
                 Text("${item.name} ",
-                    style = MaterialTheme.typography.titleLarge
+                    style = MaterialTheme.typography.titleMedium
                 )
                 Text("${item.balance} ",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.error
-
                 )
-
             }
+            HorizontalDivider()
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ){
-                Text("Total Purchase: ${item.totalPurchase} ",
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                Text("Balance: ${item.balance} ",
-                    style = MaterialTheme.typography.bodyLarge
-                )
+                Column{
+                    Text("Total Sale",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(item.totalPurchase)
+                }
+                Column{
+                    Text("Paid",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(item.paid)
+                }
             }
         }
 
     }
-    Spacer(modifier = Modifier.height(16.dp))
-
 }
 
 @Composable
@@ -496,19 +509,19 @@ fun ShowLoadingState(){
 @Composable
 fun DropDownSelectionEmpty(message: String) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.wrapContentSize().padding(8.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(4.dp),
-        border = CardDefaults.outlinedCardBorder()
+        elevation = CardDefaults.cardElevation(2.dp),
+//        border = CardDefaults.outlinedCardBorder()
     ) {
         // "Select a customer to view dues"
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
