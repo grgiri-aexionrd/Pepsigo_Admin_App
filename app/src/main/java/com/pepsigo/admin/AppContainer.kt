@@ -15,6 +15,7 @@ import com.pepsigo.admin.domainLayer.BatchStockUseCase
 import com.pepsigo.admin.domainLayer.CreatePromotionsUseCase
 import com.pepsigo.admin.domainLayer.CreatePurchaseUseCase
 import com.pepsigo.admin.domainLayer.OutstandingDuesUseCase
+import com.pepsigo.admin.domainLayer.PaymentUseCase
 import com.pepsigo.admin.domainLayer.PromotionalOfferUseCase
 import com.pepsigo.admin.domainLayer.RouteUseCase
 import com.pepsigo.admin.domainLayer.SalesPurchaseReportUseCase
@@ -36,6 +37,8 @@ import com.pepsigo.admin.repository.LedgerRepoImpl
 import com.pepsigo.admin.repository.LocationRepository
 import com.pepsigo.admin.repository.OutstandingDuesRepo
 import com.pepsigo.admin.repository.OutstandingDuesRepoImpl
+import com.pepsigo.admin.repository.PaymentRepo
+import com.pepsigo.admin.repository.PaymentRepoImpl
 import com.pepsigo.admin.repository.ProfileRepository
 import com.pepsigo.admin.repository.PromotionalOfferImpl
 import com.pepsigo.admin.repository.PromotionalOfferRepo
@@ -51,6 +54,10 @@ import com.pepsigo.admin.repository.SalesRepo
 import com.pepsigo.admin.repository.SalesRepoImpl
 import com.pepsigo.admin.repository.StockSummaryRepo
 import com.pepsigo.admin.repository.StockSummaryRepoImpl
+import com.pepsigo.admin.repository.MakeSalesRepo
+import com.pepsigo.admin.repository.MakeSalesRepoImpl
+import com.pepsigo.admin.repository.SalePrintRepo
+import com.pepsigo.admin.repository.SalePrintRepoImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -231,5 +238,21 @@ open class AppContainer(context: Context) {
 
     open val dailyCollectionRepo: DailyCollectionRepo by lazy {
         DailyCollectionRepoImpl(apiService)
+    }
+
+    open val paymentRepo: PaymentRepo by lazy {
+        PaymentRepoImpl(apiService)
+    }
+
+    open val makeSalesRepo: MakeSalesRepo by lazy {
+        MakeSalesRepoImpl(apiService)
+    }
+
+    open val salePrintRepo: SalePrintRepo by lazy {
+        SalePrintRepoImpl(apiService)
+    }
+
+    open val paymentUseCase: PaymentUseCase by lazy {
+        PaymentUseCase(paymentRepo, userRepository)
     }
  }

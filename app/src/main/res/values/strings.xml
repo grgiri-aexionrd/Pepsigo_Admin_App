@@ -77,6 +77,78 @@
     <string name="submit_promotion">Add Offer</string>
     <string name="quantity_error">*Min Amount Required</string>
     <string name="sales">Sales</string>
+    <string name="payments">Payments</string>
+
+    <!-- Payment Detail Screen -->
+    <string name="payment_detail">Payment Detail</string>
+    <string name="payment_details">Payment Details</string>
+    <string name="payment_id">Payment ID</string>
+    <string name="payment_method">Payment Method</string>
+    <string name="ref_number">Reference Number</string>
+    <string name="transaction_type">Transaction Type</string>
+    <string name="customer_details">Customer Details</string>
+    <string name="delivery_executive">Delivery Executive</string>
+    <string name="name">Name</string>
+    <string name="email">Email</string>
+    <string name="phone">Phone</string>
+    <string name="sale_details">Sale Details</string>
+    <string name="invoice_number">Invoice Number</string>
+    <string name="sale_date">Sale Date</string>
+    <string name="status">Status</string>
+    <string name="received_by">Received By</string>
+    <string name="denomination_details">Denomination Details</string>
+    <string name="card">Card</string>
+    <string name="upi">UPI</string>
+    <string name="net_banking">Net Banking</string>
+    <string name="cheque">Cheque</string>
+    <string name="credit">Credit</string>
+    <string name="retry">Retry</string>
+    <string name="make_payment">Make Payment</string>
+    <string name="print_invoice">Print Invoice</string>
+
+    <!-- Payment Review Screen -->
+    <string name="transaction_reference">Transaction Reference</string>
+    <string name="sale_id">Sale ID</string>
+    <string name="purchase_id">Purchase ID</string>
+    <string name="customer_id">Customer ID</string>
+    <string name="payment_amount">Payment Amount</string>
+    <string name="reference_number">Reference Number</string>
+    <string name="cash">Cash</string>
+    <string name="cash_total">Cash Total</string>
+    <string name="other_payments">Other Payments</string>
+    <string name="cancel">Cancel</string>
+    <string name="save_payment">Save Payment</string>
+    <string name="saving">Saving…</string>
+
+    <!-- Payment Success Screen -->
+    <string name="success">Success</string>
+    <string name="payment_successful">Payment Successful!</string>
+    <string name="payment_success_message">Your payment has been recorded successfully.</string>
+    <string name="done">Done</string>
+
+    <!-- Make Sale Screen -->
+    <string name="make_sale">Make Sale</string>
+    <string name="cart_items">Cart Items</string>
+    <string name="no_items_in_cart">No items in cart</string>
+    <string name="add_items_hint">Tap "Add Item" to add products</string>
+    <string name="select_customer_first">Please select a customer first</string>
+    <string name="add_product">Add Product</string>
+    <string name="search_products">Search products…</string>
+    <string name="search">Search</string>
+    <string name="clear">Clear</string>
+    <string name="type_more_to_search">Type at least 3 characters to filter</string>
+    <string name="error_loading_products">Error loading products</string>
+    <string name="no_products_found">No products found</string>
+    <string name="no_products_available">No products available</string>
+
+    <!-- Batch Selection Screen -->
+    <string name="select_batch">Select Batch</string>
+    <string name="best_batch">Best Batch</string>
+    <string name="no_best_batch">No best batch available</string>
+    <string name="available_batches">Available Batches</string>
+    <string name="no_batches_available">No batches available</string>
+    <string name="add">Add</string>
+    <string name="update">Update</string>
 
 
 </resources>

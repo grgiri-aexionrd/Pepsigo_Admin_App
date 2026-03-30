@@ -48,19 +48,10 @@ class LoginViewModel(private val repository: AuthRepository) : ViewModel() {
 
             result
                 .onSuccess {
-                    // 1️⃣ Fetch FCM token after login
-                    val fcmToken = FirebaseMessaging.getInstance().token.await()
-                    Log.d("FCM", "Fetched token at login: $fcmToken")
-
-                    // 2️⃣ Send to backend
-                    val tokenResult = repository.updateFcmToken(fcmToken)
-                    Log.d("LoginVM", "FCM token update result: $tokenResult")
-
-                    // 3️⃣ Optional: backend failure should not block login
-                    if (tokenResult.isFailure) {
-                        Log.e("LoginVM", "Failed to update token on backend")
+                    // fcm sync
+                     viewModelScope.launch {
+                        repository.syncFcmToken()
                     }
-
                     _uiState.value = LoginUiState.Success
                 }
                 .onFailure { error ->

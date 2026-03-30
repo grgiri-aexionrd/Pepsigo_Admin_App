@@ -17,7 +17,6 @@ class UserRepositoryImpl(private val apiService: ApiService) : UserRepository {
             val response = apiService.getUsers(role)
             Log.d("UserRepositoryImpl", "Received response: $response")
             response.map { it.toDomain() }
-
         }
     }
 

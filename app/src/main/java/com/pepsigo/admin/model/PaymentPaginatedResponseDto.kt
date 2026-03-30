@@ -20,7 +20,7 @@ data class PaymentsPaginatedResponseDto(
 
 data class PaymentDto(
     @SerializedName("id") val id: Int,
-    @SerializedName("received_by_id") val receivedById: Int?,
+    @SerializedName("received_by_id") val receivedById: Int,
     @SerializedName("purchase_id") val purchaseId: Int?,
     @SerializedName("sale_id") val saleId: Int?,
     @SerializedName("customer_id") val customerId: Int,
@@ -28,16 +28,16 @@ data class PaymentDto(
     @SerializedName("payment_method") val paymentMethod: String,
     @SerializedName("ref_number") val refNumber: String?,
     @SerializedName("transaction_type") val transactionType: String,
-    @SerializedName("customer") val customer: UserDto?,
-    @SerializedName("received_by") val receivedBy: UserDto?,
-    @SerializedName("sale") val sale: SaleDetailDto?,
-    @SerializedName("purchase") val purchase: PurchaseSummaryDto?,
+    @SerializedName("customer") val customer: UserDto,
+    @SerializedName("received_by") val receivedBy: UserDto,
+    @SerializedName("sale") val sale: SaleDetailDto? = null,
+    @SerializedName("purchase") val purchase: PurchaseSummaryDto? = null,
     @SerializedName("denomination") val denomination: DenominationDto?
 )
 
 data class SaleDetailDto(
     @SerializedName("id") val id: Int,
-    @SerializedName("invoice_number") val invoiceNumber: String?,
+    @SerializedName("invoice_number") val invoiceNumber: String,
     @SerializedName("route_assignment_id") val routeAssignmentId: Int?,
     @SerializedName("customer_id") val customerId: Int,
     @SerializedName("made_by_user_id") val madeByUserId: Int,

@@ -83,6 +83,7 @@ dependencies {
     implementation(libs.places)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.ui)
+    implementation(libs.androidx.compose.animation.core)
 
 
 

@@ -12,9 +12,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.pepsigo.admin.constants.Routes
 import com.pepsigo.admin.data.UserPreferenceRepository
 import com.pepsigo.admin.screens.deliveryExecutive.DeliveryExecutiveScreen
@@ -50,10 +52,21 @@ import com.pepsigo.admin.screens.vendors.VendorViewModel
 import com.pepsigo.admin.screens.vendors.VendorsScreen
 import com.pepsigo.admin.utils.AuthEventBus
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.libraries.places.api.Places
 import com.pepsigo.admin.screens.customer.CustomerUiState
 import com.pepsigo.admin.screens.home.NewHomeScreen
+import com.pepsigo.admin.screens.makeSales.AddProductScreen
+import com.pepsigo.admin.screens.makeSales.BatchSelectionScreen
+import com.pepsigo.admin.screens.makeSales.MakeSaleScreen
+import com.pepsigo.admin.screens.makeSales.MakeSaleViewModel
+import com.pepsigo.admin.screens.makeSales.SaleSuccessScreen
+import com.pepsigo.admin.screens.makeSales.SaleSummaryScreen
 import com.pepsigo.admin.screens.payment.PaymentScreen
+import com.pepsigo.admin.screens.payment.PaymentViewModel
+import com.pepsigo.admin.screens.payment.PaymentDetailScreen
+import com.pepsigo.admin.screens.payment.MakePaymentScreen
+import com.pepsigo.admin.screens.payment.MakePaymentViewModel
+import com.pepsigo.admin.screens.printInvoice.PrintInvoiceScreen
+import com.pepsigo.admin.screens.printInvoice.PrintInvoiceViewModel
 import com.pepsigo.admin.screens.profile.ProfileUiState
 import com.pepsigo.admin.screens.promotions.CreatePromotionsScreen
 import com.pepsigo.admin.screens.promotions.CreatePromotionsViewModel
@@ -137,7 +150,6 @@ fun StartApp(userPreferenceRepository: UserPreferenceRepository) {
         }
 
         composable("home",
-
             ) { backStackEntry ->
 //            Log.d("SS1", "Navigated to HomeScreen")
             val logoutViewModel: LogoutViewModel = viewModel(backStackEntry,factory = LogoutViewModel.Factory)
@@ -232,12 +244,192 @@ fun StartApp(userPreferenceRepository: UserPreferenceRepository) {
             SalesScreen(
                 viewModel = salesViewModel,
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToCreateSale = {}
+                onNavigateToCreateSale = {
+                    navController.navigate(Routes.MAKE_SALE)
+                },
+                onNavigateToMakePayment = { saleId, customerId, amount ->
+                    navController.navigate(Routes.makePaymentRoute(
+                        saleId = saleId,
+                        customerId = customerId,
+                        amount = amount
+                    ))
+                },
+                onNavigateToPrintInvoice = { saleId ->
+                    navController.navigate(Routes.printInvoiceRoute(saleId))
+                }
             )
         }
 
-        composable("payment"){
-            PaymentScreen()
+        composable(Routes.MAKE_SALE){ backStackEntry ->
+            val makeSaleViewModel: MakeSaleViewModel = viewModel(backStackEntry, factory = MakeSaleViewModel.Factory)
+            MakeSaleScreen(
+                viewModel = makeSaleViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToAddProduct = {
+                    navController.navigate(Routes.ADD_PRODUCT)
+                },
+                onNavigateToSummary = {
+                    navController.navigate(Routes.SALE_SUMMARY)
+                }
+            )
+        }
+
+        composable(Routes.ADD_PRODUCT){ backStackEntry ->
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(Routes.MAKE_SALE)
+            }
+            val makeSaleViewModel: MakeSaleViewModel = viewModel(parentEntry, factory = MakeSaleViewModel.Factory)
+            AddProductScreen(
+                viewModel = makeSaleViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onProductClick = { product ->
+                    makeSaleViewModel.onProductClick(product)
+                    navController.navigate(Routes.BATCH_SELECTION)
+                }
+            )
+        }
+
+        composable(Routes.BATCH_SELECTION) { backStackEntry ->
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(Routes.MAKE_SALE)
+            }
+            val makeSaleViewModel: MakeSaleViewModel = viewModel(parentEntry, factory = MakeSaleViewModel.Factory)
+            BatchSelectionScreen(
+                viewModel = makeSaleViewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Routes.SALE_SUMMARY) { backStackEntry ->
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(Routes.MAKE_SALE)
+            }
+            val makeSaleViewModel: MakeSaleViewModel = viewModel(parentEntry, factory = MakeSaleViewModel.Factory)
+            SaleSummaryScreen(
+                viewModel = makeSaleViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onSaleSuccess = {
+                    navController.navigate(Routes.SALE_SUCCESS) {
+                        // Clear back stack up to MAKE_SALE (exclusive)
+                        popUpTo(Routes.MAKE_SALE) { inclusive = false }
+                    }
+                }
+            )
+        }
+
+        composable(Routes.SALE_SUCCESS) { backStackEntry ->
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(Routes.MAKE_SALE)
+            }
+            val makeSaleViewModel: MakeSaleViewModel = viewModel(parentEntry, factory = MakeSaleViewModel.Factory)
+            SaleSuccessScreen(
+                viewModel = makeSaleViewModel,
+                onMakePayment = { saleId, customerId, amount ->
+                    navController.navigate(Routes.makePaymentRoute(
+                        saleId = saleId,
+                        customerId = customerId,
+                        amount = amount
+                    ))
+                },
+                onPrintInvoice = {
+                    val saleId = makeSaleViewModel.state.value.createdSaleId ?: return@SaleSuccessScreen
+                    navController.navigate(Routes.printInvoiceRoute(saleId))
+                },
+                onNavigateToSales = {
+                    // Navigate back to sales screen and clear the entire sale flow
+                    navController.popBackStack(Routes.MAKE_SALE,inclusive = true)
+                }
+            )
+        }
+
+        composable(
+            Routes.PRINT_INVOICE,
+            arguments = listOf(navArgument("saleId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val saleId = backStackEntry.arguments?.getInt("saleId") ?: 0
+            val printInvoiceViewModel: PrintInvoiceViewModel = viewModel(
+                factory = PrintInvoiceViewModel.provideFactory(saleId)
+            )
+            PrintInvoiceScreen(
+                viewModel = printInvoiceViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onPrint = { invoiceText ->
+                    // TODO: Implement actual printing
+                    // For now, you could use Android's print framework or save to PDF
+                }
+            )
+        }
+
+        composable("payment"){ backStackEntry ->
+            val paymentViewModel: PaymentViewModel = viewModel(backStackEntry, factory = PaymentViewModel.Factory)
+            PaymentScreen(
+                viewModel = paymentViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToDetail = { payment ->
+                    navController.navigate(Routes.paymentDetailRoute(payment.id))
+                },
+                onNavigateToMakePayment = {
+                    navController.navigate(Routes.makePaymentRoute())
+                }
+            )
+        }
+
+//      Make Payment Screen
+        composable(
+            Routes.MAKE_PAYMENT_ROUTE,
+            arguments = listOf(
+                navArgument("saleId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+                navArgument("purchaseId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+                navArgument("customerId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+                navArgument("amount") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) { backStackEntry ->
+            val makePaymentViewModel: MakePaymentViewModel =
+                viewModel(
+                    backStackEntry,
+                    factory = MakePaymentViewModel.Factory
+                )
+
+            MakePaymentScreen(
+                viewModel = makePaymentViewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onPaymentSuccess = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Routes.PaymentDetail,
+            arguments = listOf(
+                navArgument("paymentId") {
+                    type = NavType.IntType
+                }
+            )
+        ) { backStackEntry ->
+            // Get the parent backstack entry for the payment screen to share the ViewModel
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry("payment")
+            }
+            val paymentViewModel: PaymentViewModel = viewModel(parentEntry, factory = PaymentViewModel.Factory)
+            PaymentDetailScreen(
+                viewModel = paymentViewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
         composable("location"){
@@ -473,6 +665,8 @@ fun StartApp(userPreferenceRepository: UserPreferenceRepository) {
                 viewModel = paymentSummaryViewModel,
                 onNavigateBack = { navController.popBackStack() })
         }
+
+
 
 
 

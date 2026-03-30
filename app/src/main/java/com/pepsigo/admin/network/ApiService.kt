@@ -7,6 +7,7 @@ import com.pepsigo.admin.model.AddUserRequest
 import com.pepsigo.admin.model.BatchStockResponse
 import com.pepsigo.admin.model.CheckLoginResponse
 import com.pepsigo.admin.model.CreatePurchaseRequest
+import com.pepsigo.admin.model.CreateSaleRequestDto
 import com.pepsigo.admin.model.CustomerLedgerResponse
 import com.pepsigo.admin.model.DashboardDto
 import com.pepsigo.admin.model.EditInventoryRequest
@@ -17,6 +18,7 @@ import com.pepsigo.admin.model.LoginResponse
 import com.pepsigo.admin.model.EmailUpdateRequest
 import com.pepsigo.admin.model.ExecutiveStatusResponse
 import com.pepsigo.admin.model.FCMTokenUpdateRequest
+import okhttp3.ResponseBody
 import com.pepsigo.admin.model.FCMTokenUpdateResponse
 import com.pepsigo.admin.model.GetInventoryResponse
 import com.pepsigo.admin.model.GetRoutesDto
@@ -48,12 +50,24 @@ import com.pepsigo.admin.model.UserResponse
 import com.pepsigo.admin.model.VendorLedgerResponse
 import com.pepsigo.admin.model.DailyCollectionResponse
 import com.pepsigo.admin.model.DeliveryPerformanceResponse
+import com.pepsigo.admin.model.InventoryAllBatchesResponse
+import com.pepsigo.admin.model.InventoryBestBatchResponse
 import com.pepsigo.admin.model.ItemWiseSalesResponse
+import com.pepsigo.admin.model.MakePaymentRequestDto
+import com.pepsigo.admin.model.PaymentDto
+import com.pepsigo.admin.model.PaymentResponse
 import com.pepsigo.admin.model.PaymentSummaryResponse
+import com.pepsigo.admin.model.PaymentUpdateDto
 import com.pepsigo.admin.model.PaymentsPaginatedResponseDto
 import com.pepsigo.admin.model.PromotionalOfferCreate
 import com.pepsigo.admin.model.PromotionalOfferCreateResponse
+import com.pepsigo.admin.model.SaleInventorySearchResponse
+import com.pepsigo.admin.model.SalesDetailDto
 import com.pepsigo.admin.model.SalesPaginatedResponseDto
+import com.pepsigo.admin.model.SalesResponse
+import com.pepsigo.admin.model.SalesReturnRequest
+import com.pepsigo.admin.model.SalesReturnResponse
+import com.pepsigo.admin.model.UpdatePaymentRequest
 import retrofit2.http.POST
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -177,6 +191,8 @@ interface ApiService {
     @GET("inventory/{id}")
     suspend fun getInventoryById(@Path("id") id: Int): InventoryResponse<InventoryItemDetailDto>
 
+
+
     @POST("inventory")
     suspend fun addInventory(@Body body: AddInventoryRequest): InventoryResponse<InventoryItem>
 
@@ -224,6 +240,51 @@ interface ApiService {
     @GET("sales")
     suspend fun getSales(@Query("page") page: Int): SalesPaginatedResponseDto
 
+    @GET("sales/{id}")
+    suspend fun getSaleById(@Path("id") id: Int): SalesResponse<SalesDetailDto>
+
+    @PATCH("sales/{id}/cancel")
+    suspend fun cancelSale(@Path("id") id: Int): SalesResponse<Unit>
+
+    @POST("sales/{id}/return")
+    suspend fun returnSale(
+        @Path("id") id: Int,
+        @Body body: SalesReturnRequest
+    ): SalesResponse<SalesReturnResponse>
+
+    // Make Sale
+
+    @GET("inventory/{id}/search")
+    suspend fun searchInventory(
+        @Path("id") id: Int,
+        @Query("query") query: String? = null
+    ): SaleInventorySearchResponse
+
+
+    // gets all batches for selected inventory item and customer id
+    @GET("inventory/{id}/batches")
+    suspend fun getInventoryBatches(
+        @Path("id") id: Int,
+        @Query("customer_id") customerId: Int? = null
+    ): InventoryAllBatchesResponse
+
+
+    // gets best batch for selected inventory item and customer id
+    @GET("inventory/{id}/batch")
+    suspend fun getInventoryBestBatchForCustomer(
+        @Path("id") id: Int,
+        @Query("customer_id") customerId: Int? = null
+    ): InventoryBestBatchResponse
+
+    // Make Sale
+    @POST("sales")
+    suspend fun createSale(@Body body: CreateSaleRequestDto): SalesResponse<SalesReturnResponse>
+
+    @GET("sales/{id}/printable")
+    suspend fun getSalePrintable(@Path("id") saleId: Int): ResponseBody
+
+
+
     // Payment endpoint
     @GET("payments")
     suspend fun getPayments(
@@ -232,6 +293,22 @@ interface ApiService {
         @Query("customer_id") customerId: Int? = null,
         @Query("date") date: String? = null
     ): PaymentsPaginatedResponseDto
+
+    @GET("payments/{id}")
+    suspend fun getPaymentById(@Path("id") id: Int): PaymentResponse<PaymentDto>
+
+    @POST("payments")
+    suspend fun createPayment(@Body request: MakePaymentRequestDto): PaymentResponse<PaymentUpdateDto>
+
+
+    @PUT("payments/{id}")
+    suspend fun updatePayment(
+        @Path("id") id: Int,
+        @Body request: UpdatePaymentRequest
+    ): PaymentResponse<PaymentUpdateDto>
+
+    @PATCH("payments/{id}/cancel")
+    suspend fun cancelPayment(@Path("id") id: Int): PaymentResponse<Unit>
 
 
 

@@ -15,6 +15,15 @@ fun Int?.safeInt(default: Int = 0): Int =
 fun Double?.safeAmount(): String =
     this?.toCurrency() ?: "₹ 0.00"
 
+fun parseCurrencyToDoubleSafe(value: String): Double? {
+    return value
+        .replace(Regex("[^0-9.]"), "")
+        .toDoubleOrNull()
+}
+
+fun Double?.safeOfferAmount(): String =
+    this?.toCurrency() ?: "N/A"
+
 // ✔ Safe double → String
 fun Double?.safeString(default: String = ""): String =
     this?.toString() ?: default
@@ -28,6 +37,9 @@ fun String?.safeDate(): String =
 // ✔ Safe Percentage
 fun Double?.safePercent(default: String = "0%"): String =
     if (this == null) default else "${this.toInt()}%"
+
+fun Int?.safeIntPercent(default: String = "0%"): String =
+    if (this == null) default else "${this}%"
 
 //Api Nullable
 fun String.toApiNullable(): String? =
